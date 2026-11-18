@@ -1,15 +1,34 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import type { Metadata } from "next"
+import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from "next/font/google"
+
+import { Navbar } from "@/components/navbar"
+import { ThemeProvider } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
 
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
+// Modern, clean body font
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
+
+// Bold, distinctive display font for headings & brand wordmark
+const bricolageGrotesque = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-heading",
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "PizzaHub — Hot & Fresh Pizza Delivered to Your Door",
+  description:
+    "Discover local pizza shops, browse fresh wood-fired menus, and order your favorite slices delivered hot to your door.",
+}
 
 export default function RootLayout({
   children,
@@ -20,10 +39,18 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
+      className={cn(
+        "antialiased font-sans",
+        dmSans.variable,
+        bricolageGrotesque.variable,
+        fontMono.variable
+      )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <Navbar />
+          <main>{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   )
