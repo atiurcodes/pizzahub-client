@@ -66,19 +66,14 @@ export function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const dashboardHref = getDashboardPath(role)
+  const profileHref = getProfilePath(role)
+
   // Build navigation links based on login state and role
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "Browse Menu", href: "/menu" },
-    ...(user
-      ? [
-          role === "admin"
-            ? { label: "Admin Panel", href: "/dashboard/admin" }
-            : role === "vendor"
-              ? { label: "Vendor Dashboard", href: "/dashboard/vendor" }
-              : { label: "My Orders", href: "/dashboard/customer/orders" },
-        ]
-      : []),
+    ...(user ? [{ label: "Dashboard", href: dashboardHref }] : []),
   ]
 
   // Show a success toast after returning from Google Sign In / Sign Up
@@ -129,8 +124,10 @@ export function Navbar() {
     }
   }
 
-  const dashboardHref = getDashboardPath(role)
-  const profileHref = getProfilePath(role)
+  // Hide the public navbar on /dashboard pages (dashboards use their own sidebar layout)
+  if (pathname.startsWith("/dashboard")) {
+    return null
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur-md">

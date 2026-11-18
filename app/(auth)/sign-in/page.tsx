@@ -88,9 +88,8 @@ export default function SignInPage() {
         type: "success",
       })
 
-      // Later, redirect by role:
-      // admin -> "/dashboard/admin", vendor -> "/dashboard/vendor", customer -> "/dashboard/customer"
-      router.push("/")
+      // /dashboard automatically redirects based on user role (admin / vendor / customer)
+      router.push("/dashboard")
       router.refresh()
     } catch {
       const message = "Something went wrong. Please try again."

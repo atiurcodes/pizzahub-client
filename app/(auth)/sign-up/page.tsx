@@ -125,8 +125,8 @@ export default function SignUpPage() {
         type: "success",
       })
 
-      // Later change "/" to role === "vendor" ? "/dashboard/vendor" : "/dashboard/customer"
-      router.push("/")
+      // /dashboard automatically redirects based on user role (vendor / customer)
+      router.push("/dashboard")
       router.refresh()
     } catch {
       const message = "Something went wrong. Please try again."
