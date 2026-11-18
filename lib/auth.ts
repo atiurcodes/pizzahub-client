@@ -9,6 +9,15 @@ const db = client.db('pizzahubdb')
 export const auth = betterAuth({
     database: mongodbAdapter(db, { client }),
 
+    // Store a signed HS256 JWT inside Better Auth's session cookie (better-auth.session_data)
+    session: {
+        cookieCache: {
+            enabled: true,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            strategy: "jwt",
+        },
+    },
+
     emailAndPassword: {
         enabled: true,
         minPasswordLength: 6,

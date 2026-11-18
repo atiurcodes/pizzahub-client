@@ -27,6 +27,7 @@ import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
+import { clearAuthToken } from "@/lib/api"
 import { authClient } from "@/lib/auth-client"
 import type { DashboardUser, UserRole } from "@/lib/auth-guard"
 import { cn } from "@/lib/utils"
@@ -132,6 +133,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   async function handleLogout() {
     try {
       await authClient.signOut()
+      clearAuthToken()
       toast.add({
         title: "Signed out",
         description: "You have been logged out of PizzaHub.",

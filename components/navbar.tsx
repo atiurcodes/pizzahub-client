@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toast"
+import { clearAuthToken } from "@/lib/api"
 import { authClient, useSession } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 
@@ -107,6 +108,7 @@ export function Navbar() {
   async function handleLogout() {
     try {
       await authClient.signOut()
+      clearAuthToken()
       setMobileMenuOpen(false)
       toast.add({
         title: "Signed out",
