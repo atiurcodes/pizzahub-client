@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from "next/font/google"
 
 import { Navbar } from "@/components/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 import "./globals.css"
@@ -48,8 +49,10 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <Navbar />
-          <main>{children}</main>
+          <Toaster>
+            <Navbar />
+            <main>{children}</main>
+          </Toaster>
         </ThemeProvider>
       </body>
     </html>

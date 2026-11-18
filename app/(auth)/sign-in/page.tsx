@@ -2,37 +2,147 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Eye, EyeOff, Pizza, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowRight, Eye, EyeOff, Loader2, Pizza, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/toast"
+import { authClient } from "@/lib/auth-client"
 
-export default function SignInPage() {
-  // 1. State to store form input values
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-
-  // 2. Form submit handler (receives all form data)
-  function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-
-    const formData = {
-      email,
-      password,
-    }
-
-    console.log("Sign In Form Data:", formData)
-
-    // TODO: Add your Better Auth sign-in logic here
+// Simple form validation before sending request
+function validateSignInForm(email: string, password: string) {
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+    return "Please enter a valid email address."
   }
 
-  // 3. Google sign-in button handler
-  function handleGoogleSignIn() {
-    console.log("Google Sign In clicked")
+  if (password.length < 6) {
+    return "Password must be at least 6 characters."
+  }
 
-    // TODO: Add your Google OAuth sign-in logic here
+  return null
+}
+
+export default function SignInPage() {
+  const router = useRouter()
+
+  // 1. Form field states
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+
+  // 2. UI states
+  const [showPassword, setShowPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  // 3. Handle Email & Password Sign In
+  async function handleSignIn(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setErrorMessage("")
+
+    // Step A: Validate email and password first
+    const validationError = validateSignInForm(email, password)
+    if (validationError) {
+      setErrorMessage(validationError)
+      return
+    }
+
+    // Step B: Call Better Auth signIn.email()
+    setIsLoading(true)
+    try {
+      const res = await authClient.signIn.email({
+        email: email.trim(),
+        password,
+      })
+
+      if (res.error) {
+        const message =
+          res.error.message || "Invalid email or password. Please try again."
+        setErrorMessage(message)
+        toast.add({
+          title: "Sign in failed",
+          description: message,
+          type: "error",
+        })
+        return
+      }
+
+      // Step C: Check if the user account is blocked by an admin
+      const session = await authClient.getSession()
+      if (session.data?.user?.isBlocked) {
+        await authClient.signOut()
+        const blockedMsg = "Your account is blocked. Please contact support."
+        setErrorMessage(blockedMsg)
+        toast.add({
+          title: "Account blocked",
+          description: blockedMsg,
+          type: "error",
+        })
+        return
+      }
+
+      toast.add({
+        title: "Welcome back!",
+        description: `Signed in as ${res.data.user.name}.`,
+        type: "success",
+      })
+
+      // Later, redirect by role:
+      // admin -> "/dashboard/admin", vendor -> "/dashboard/vendor", customer -> "/dashboard/customer"
+      router.push("/")
+      router.refresh()
+    } catch {
+      const message = "Something went wrong. Please try again."
+      setErrorMessage(message)
+      toast.add({
+        title: "Error",
+        description: message,
+        type: "error",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 4. Handle Google Sign In
+  async function handleGoogleSignIn() {
+    setErrorMessage("")
+    setIsLoading(true)
+
+    toast.add({
+      title: "Connecting to Google...",
+      description: "Redirecting you to Google Sign In.",
+      type: "info",
+    })
+
+    try {
+      const res = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/?auth=google-signin",
+      })
+
+      if (res.error) {
+        const message =
+          res.error.message || "Google sign in failed. Please try again."
+        setErrorMessage(message)
+        toast.add({
+          title: "Google sign in failed",
+          description: message,
+          type: "error",
+        })
+      }
+    } catch {
+      const message = "Unable to connect to Google right now."
+      setErrorMessage(message)
+      toast.add({
+        title: "Error",
+        description: message,
+        type: "error",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -72,8 +182,18 @@ export default function SignInPage() {
             </p>
           </div>
 
+          {/* Inline Error Box */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+            >
+              {errorMessage}
+            </div>
+          )}
+
           {/* Sign In Form */}
-          <form onSubmit={handleSignIn} className="mt-7 space-y-5">
+          <form onSubmit={handleSignIn} noValidate className="mt-6 space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold">
@@ -86,6 +206,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
                 className="h-12 rounded-xl bg-background px-4 text-sm"
               />
             </div>
@@ -103,6 +224,7 @@ export default function SignInPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                   className="h-12 rounded-xl bg-background px-4 pr-11 text-sm"
                 />
                 <button
@@ -124,10 +246,20 @@ export default function SignInPage() {
             <Button
               type="submit"
               size="lg"
+              disabled={isLoading}
               className="h-12 w-full rounded-full bg-gradient-to-r from-primary to-tomato text-base font-semibold shadow-md shadow-primary/20 hover:opacity-95"
             >
-              Sign In
-              <ArrowRight className="ml-1 size-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="ml-1 size-4" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -145,6 +277,7 @@ export default function SignInPage() {
             type="button"
             variant="outline"
             size="lg"
+            disabled={isLoading}
             onClick={handleGoogleSignIn}
             className="h-12 w-full rounded-full text-sm font-semibold"
           >

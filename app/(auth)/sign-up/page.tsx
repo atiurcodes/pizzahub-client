@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowRight,
   ChevronDown,
   Eye,
   EyeOff,
+  Loader2,
   Pizza,
   ShieldCheck,
   X,
@@ -15,38 +17,168 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/toast"
+import { authClient } from "@/lib/auth-client"
+
+// Simple beginner-friendly form validation function
+function validateSignUpForm(data: {
+  name: string
+  email: string
+  password: string
+  image: string
+  role: string
+}) {
+  // 1. Check Full Name
+  if (data.name.trim().length < 2) {
+    return "Full name must be at least 2 characters."
+  }
+
+  // 2. Check Email format
+  if (!/^\S+@\S+\.\S+$/.test(data.email.trim())) {
+    return "Please enter a valid email address."
+  }
+
+  // 3. Check Password rules (6+ chars, 1 uppercase, 1 lowercase)
+  if (data.password.length < 6) {
+    return "Password must be at least 6 characters long."
+  }
+  if (!/[A-Z]/.test(data.password)) {
+    return "Password must include at least 1 uppercase letter (A-Z)."
+  }
+  if (!/[a-z]/.test(data.password)) {
+    return "Password must include at least 1 lowercase letter (a-z)."
+  }
+
+  // 4. Check Profile Image URL (only if user entered one)
+  if (data.image.trim() && !/^https?:\/\/.+/.test(data.image.trim())) {
+    return "Profile image must be a valid link starting with http:// or https://"
+  }
+
+  // 5. Check Role (only customer or vendor allowed)
+  if (data.role !== "customer" && data.role !== "vendor") {
+    return "Please choose either Customer or Vendor."
+  }
+
+  return null // Everything is valid!
+}
 
 export default function SignUpPage() {
-  // 1. State to store form input values
+  const router = useRouter()
+
+  // 1. Form field states
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [image, setImage] = useState("")
   const [role, setRole] = useState<"customer" | "vendor">("customer")
+
+  // 2. UI states
   const [showPassword, setShowPassword] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  // 2. Form submit handler (receives all form data)
-  function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
+  // 3. Handle Email & Password Sign Up
+  async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    setErrorMessage("")
 
-    const formData = {
+    // Step A: Run all form validations first
+    const validationError = validateSignUpForm({
       name,
       email,
       password,
-      image: image.trim() || undefined,
+      image,
       role,
+    })
+
+    if (validationError) {
+      setErrorMessage(validationError)
+      return
     }
 
-    console.log("Sign Up Form Data:", formData)
+    // Step B: Send data to Better Auth
+    setIsLoading(true)
+    try {
+      const res = await authClient.signUp.email({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        image: image.trim() || undefined,
+        role,
+      })
 
-    // TODO: Add your password validation and Better Auth sign-up logic here
+      if (res.error) {
+        const message =
+          res.error.message || "Could not create account. Please try again."
+        setErrorMessage(message)
+        toast.add({
+          title: "Sign up failed",
+          description: message,
+          type: "error",
+        })
+        return
+      }
+
+      toast.add({
+        title: "Account created!",
+        description: `Welcome to PizzaHub, ${name.trim()}!`,
+        type: "success",
+      })
+
+      // Later change "/" to role === "vendor" ? "/dashboard/vendor" : "/dashboard/customer"
+      router.push("/")
+      router.refresh()
+    } catch {
+      const message = "Something went wrong. Please try again."
+      setErrorMessage(message)
+      toast.add({
+        title: "Error",
+        description: message,
+        type: "error",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // 3. Google sign-up button handler
-  function handleGoogleSignUp() {
-    console.log("Google Sign Up clicked", { role })
+  // 4. Handle Google Sign Up
+  async function handleGoogleSignUp() {
+    setErrorMessage("")
+    setIsLoading(true)
 
-    // TODO: Add your Google OAuth sign-up logic here
+    toast.add({
+      title: "Connecting to Google...",
+      description: "Redirecting you to Google Sign Up.",
+      type: "info",
+    })
+
+    try {
+      const res = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/?auth=google-signup",
+      })
+
+      if (res.error) {
+        const message =
+          res.error.message || "Google sign up failed. Please try again."
+        setErrorMessage(message)
+        toast.add({
+          title: "Google sign up failed",
+          description: message,
+          type: "error",
+        })
+      }
+    } catch {
+      const message = "Unable to connect to Google right now."
+      setErrorMessage(message)
+      toast.add({
+        title: "Error",
+        description: message,
+        type: "error",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -86,8 +218,18 @@ export default function SignUpPage() {
             </p>
           </div>
 
+          {/* Inline Error Box */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+            >
+              {errorMessage}
+            </div>
+          )}
+
           {/* Sign Up Form */}
-          <form onSubmit={handleSignUp} className="mt-7 space-y-4">
+          <form onSubmit={handleSignUp} noValidate className="mt-6 space-y-4">
             {/* Full Name Field */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-semibold">
@@ -100,6 +242,7 @@ export default function SignUpPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={isLoading}
                 className="h-12 rounded-xl bg-background px-4 text-sm"
               />
             </div>
@@ -116,6 +259,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
                 className="h-12 rounded-xl bg-background px-4 text-sm"
               />
             </div>
@@ -133,6 +277,7 @@ export default function SignUpPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                   className="h-12 rounded-xl bg-background px-4 pr-11 text-sm"
                 />
                 <button
@@ -148,6 +293,10 @@ export default function SignUpPage() {
                   )}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                At least 6 characters, 1 uppercase letter, and 1 lowercase
+                letter.
+              </p>
             </div>
 
             {/* Profile Image Field (Optional) */}
@@ -164,6 +313,7 @@ export default function SignUpPage() {
                 placeholder="https://example.com/avatar.jpg"
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
+                disabled={isLoading}
                 className="h-12 rounded-xl bg-background px-4 text-sm"
               />
             </div>
@@ -177,10 +327,11 @@ export default function SignUpPage() {
                 <select
                   id="role"
                   value={role}
+                  disabled={isLoading}
                   onChange={(e) =>
                     setRole(e.target.value as "customer" | "vendor")
                   }
-                  className="h-12 w-full appearance-none rounded-xl border border-input bg-background px-4 pr-10 text-sm font-medium text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="h-12 w-full appearance-none rounded-xl border border-input bg-background px-4 pr-10 text-sm font-medium text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
                 >
                   <option value="customer">Customer (Order Pizza)</option>
                   <option value="vendor">Vendor (Restaurant Owner)</option>
@@ -193,10 +344,20 @@ export default function SignUpPage() {
             <Button
               type="submit"
               size="lg"
+              disabled={isLoading}
               className="mt-2 h-12 w-full rounded-full bg-gradient-to-r from-primary to-tomato text-base font-semibold shadow-md shadow-primary/20 hover:opacity-95"
             >
-              Create Account
-              <ArrowRight className="ml-1 size-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="ml-1 size-4" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -214,6 +375,7 @@ export default function SignUpPage() {
             type="button"
             variant="outline"
             size="lg"
+            disabled={isLoading}
             onClick={handleGoogleSignUp}
             className="h-12 w-full rounded-full text-sm font-semibold"
           >
