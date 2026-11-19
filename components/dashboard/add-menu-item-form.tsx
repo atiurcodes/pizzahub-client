@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Building2,
@@ -11,6 +12,7 @@ import {
   DollarSign,
   ImagePlus,
   Info,
+  Loader2,
   MapPin,
   Pizza,
   Sparkles,
@@ -31,25 +33,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "@/components/ui/toast"
 import type { DashboardUser } from "@/lib/auth-guard"
-
-// Strictly the 6 exact categories defined in AGENTS.md
-export const PIZZA_CATEGORIES = [
-  "Classic Pizzas",
-  "Vegetarian Pizzas",
-  "Meat Lovers",
-  "Specialty / Gourmet Pizzas",
-  "Sides & Appetizers",
-  "Beverages & Desserts",
-] as const
-
-export type PizzaCategory = (typeof PIZZA_CATEGORIES)[number]
+import { createMenuItem, uploadImage } from "@/services/api"
+import { PIZZA_CATEGORIES, type PizzaCategory } from "@/types"
 
 interface AddMenuItemFormProps {
   user: DashboardUser
 }
 
 export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
+  const router = useRouter()
+
   // Form fields state
   const [itemName, setItemName] = useState("")
   const [category, setCategory] = useState<PizzaCategory>("Classic Pizzas")
@@ -57,9 +52,13 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   const [location, setLocation] = useState(user.businessName || "")
   const [description, setDescription] = useState("")
 
-  // Image preview state (UI phase)
+  // Image file & preview state
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [selectedFileName, setSelectedFileName] = useState<string>("")
+
+  // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isPremium = user.subscriptionPlan === "premium"
 
@@ -67,6 +66,7 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      setImageFile(file)
       setSelectedFileName(file.name)
       const localUrl = URL.createObjectURL(file)
       setPreviewUrl(localUrl)
@@ -75,14 +75,99 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
 
   // Remove selected preview
   const handleRemoveImage = () => {
+    setImageFile(null)
     setPreviewUrl(null)
     setSelectedFileName("")
   }
 
-  // Temporary UI submit handler (logic will be wired in the next step)
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form submission handler
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Logic will be wired in Step 2 (ImgBB upload + Backend API call)
+
+    // Step A: Client-side input validation
+    if (!itemName.trim() || itemName.trim().length < 3) {
+      toast.add({
+        title: "Validation Error",
+        description: "Please enter a valid item name (at least 3 characters).",
+        type: "error",
+      })
+      return
+    }
+
+    const parsedPrice = parseFloat(price)
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      toast.add({
+        title: "Validation Error",
+        description: "Please enter a valid price greater than $0.",
+        type: "error",
+      })
+      return
+    }
+
+    if (!location.trim()) {
+      toast.add({
+        title: "Validation Error",
+        description: "Please specify the restaurant area or branch location.",
+        type: "error",
+      })
+      return
+    }
+
+    if (!description.trim() || description.trim().length < 10) {
+      toast.add({
+        title: "Validation Error",
+        description: "Description should be at least 10 characters long.",
+        type: "error",
+      })
+      return
+    }
+
+    if (!imageFile) {
+      toast.add({
+        title: "Image Required",
+        description: "Please select an appetizing pizza image to upload.",
+        type: "error",
+      })
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Step B: Upload image to ImgBB using the centralized service
+      const uploadedImageUrl = await uploadImage(imageFile)
+
+      // Step C: Send item data to Express Backend (/api/menu) using the centralized service
+      await createMenuItem({
+        itemName: itemName.trim(),
+        category,
+        price: parsedPrice,
+        location: location.trim(),
+        description: description.trim(),
+        images: [uploadedImageUrl],
+        vendorEmail: user.email, // sole vendor identifier
+      })
+
+      // Step D: Show success toast and redirect to My Menu Items page
+      toast.add({
+        title: "Menu Item Submitted!",
+        description: "Your pizza is submitted and is pending admin approval.",
+        type: "success",
+      })
+
+      router.push("/dashboard/vendor/menu-items")
+    } catch (err) {
+      toast.add({
+        title: "Submission Error",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to submit menu item. Please try again.",
+        type: "error",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -378,9 +463,17 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
           <div className="space-y-2 pt-2">
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-9"
             >
-              <span>Submit Menu Item</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-1.5" />
+                  <span>Submitting Menu Item...</span>
+                </>
+              ) : (
+                <span>Submit Menu Item</span>
+              )}
             </Button>
 
             <Link
