@@ -51,6 +51,20 @@ export const auth = betterAuth({
                     },
                 }),
             },
+            update: {
+                before: async (user) => {
+                    // Security rule: Prevent users from changing their role, block status, or subscription
+                    const cleanData = { ...user }
+                    delete (cleanData as Record<string, unknown>).role
+                    delete (cleanData as Record<string, unknown>).isBlocked
+                    delete (cleanData as Record<string, unknown>).subscriptionPlan
+                    delete (cleanData as Record<string, unknown>).subscriptionExpiresAt
+
+                    return {
+                        data: cleanData,
+                    }
+                },
+            },
         },
     },
 
