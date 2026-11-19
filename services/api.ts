@@ -1,8 +1,17 @@
 import { apiFetch } from "@/lib/api"
-import type { MenuItemData } from "@/types"
+import type { MenuItem, MenuItemData } from "@/types"
 
-export type { MenuItemData }
+// Re-export types for convenience
+export type { MenuItem, MenuItemData }
 
+// ==========================================
+// 1. Image Upload Service (ImgBB)
+// ==========================================
+
+/**
+ * Uploads an image file to ImgBB and returns its hosted public URL.
+ * Falls back to a demo placeholder image during development if API key is not yet set.
+ */
 export async function uploadImage(file: File): Promise<string> {
   const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY
 
@@ -27,9 +36,24 @@ export async function uploadImage(file: File): Promise<string> {
   return data.data.url as string
 }
 
+// ==========================================
+// 2. Menu Item API Actions
+// ==========================================
+
+/**
+ * Create a new menu item (Vendor only, sends POST /api/menu with JWT Bearer)
+ */
 export async function createMenuItem(menuData: MenuItemData) {
   return apiFetch("/api/menu", {
     method: "POST",
     body: JSON.stringify(menuData),
   })
+}
+
+/**
+ * Fetch all menu items belonging to the logged-in vendor (Vendor only, GET /api/menu/my-items)
+ */
+export async function getMyMenuItems(): Promise<MenuItem[]> {
+  const data = await apiFetch("/api/menu/my-items")
+  return (data.items || []) as MenuItem[]
 }
