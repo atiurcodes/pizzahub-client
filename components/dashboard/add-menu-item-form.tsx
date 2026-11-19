@@ -1,0 +1,401 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import {
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Clock,
+  Crown,
+  DollarSign,
+  ImagePlus,
+  Info,
+  MapPin,
+  Pizza,
+  Sparkles,
+  Upload,
+  UtensilsCrossed,
+  X,
+} from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import type { DashboardUser } from "@/lib/auth-guard"
+
+// Strictly the 6 exact categories defined in AGENTS.md
+export const PIZZA_CATEGORIES = [
+  "Classic Pizzas",
+  "Vegetarian Pizzas",
+  "Meat Lovers",
+  "Specialty / Gourmet Pizzas",
+  "Sides & Appetizers",
+  "Beverages & Desserts",
+] as const
+
+export type PizzaCategory = (typeof PIZZA_CATEGORIES)[number]
+
+interface AddMenuItemFormProps {
+  user: DashboardUser
+}
+
+export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
+  // Form fields state
+  const [itemName, setItemName] = useState("")
+  const [category, setCategory] = useState<PizzaCategory>("Classic Pizzas")
+  const [price, setPrice] = useState("")
+  const [location, setLocation] = useState(user.businessName || "")
+  const [description, setDescription] = useState("")
+
+  // Image preview state (UI phase)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [selectedFileName, setSelectedFileName] = useState<string>("")
+
+  const isPremium = user.subscriptionPlan === "premium"
+
+  // Handle local image file selection for live preview
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFileName(file.name)
+      const localUrl = URL.createObjectURL(file)
+      setPreviewUrl(localUrl)
+    }
+  }
+
+  // Remove selected preview
+  const handleRemoveImage = () => {
+    setPreviewUrl(null)
+    setSelectedFileName("")
+  }
+
+  // Temporary UI submit handler (logic will be wired in the next step)
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Logic will be wired in Step 2 (ImgBB upload + Backend API call)
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Top Banner: Subscription Plan Limit Notice */}
+      <div
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border text-sm ${
+          isPremium
+            ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200"
+            : "bg-primary/5 border-primary/20 text-foreground"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          {isPremium ? (
+            <div className="size-9 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Crown className="size-5 fill-amber-500 text-amber-500" />
+            </div>
+          ) : (
+            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Info className="size-5" />
+            </div>
+          )}
+          <div>
+            <div className="font-semibold flex items-center gap-2">
+              <span>{isPremium ? "Premium Vendor Plan" : "Free Vendor Plan"}</span>
+              <Badge
+                variant={isPremium ? "default" : "secondary"}
+                className={
+                  isPremium
+                    ? "bg-amber-500 text-white font-medium text-[11px]"
+                    : "text-[11px]"
+                }
+              >
+                {isPremium ? "Unlimited Items" : "Max 3 Active Items"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isPremium
+                ? "You have unlimited active item listings and priority placement on the homepage."
+                : "Free plan vendors can publish up to 3 active menu items. Upgrade to Premium for unlimited listings."}
+            </p>
+          </div>
+        </div>
+
+        {!isPremium && (
+          <Link
+            href="/dashboard/vendor/subscription"
+            className={buttonVariants({
+              variant: "outline",
+              size: "sm",
+              className: "shrink-0 border-primary/30 text-primary hover:bg-primary/10 text-xs",
+            })}
+          >
+            <span>Upgrade Plan</span>
+          </Link>
+        )}
+      </div>
+
+      {/* Main Add Item Form */}
+      <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column (2 Cols): Item Details */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="border-b border-border/40 pb-4">
+              <div className="flex items-center gap-2">
+                <UtensilsCrossed className="size-5 text-primary" />
+                <CardTitle className="text-lg">Item Information</CardTitle>
+              </div>
+              <CardDescription>
+                Provide accurate details and an appetizing description for your pizza.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-5 pt-6">
+              {/* Item Name */}
+              <div className="space-y-2">
+                <Label htmlFor="itemName" className="flex items-center gap-1.5">
+                  <Pizza className="size-4 text-primary" />
+                  <span>Item Name</span>
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="itemName"
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
+                  placeholder="e.g. Wood-Fired Margherita Special"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Give your item a clear, attractive name that customers can easily recognize.
+                </p>
+              </div>
+
+              {/* Category & Price Row */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Category Dropdown */}
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="flex items-center gap-1.5">
+                    <Sparkles className="size-4 text-primary" />
+                    <span>Category</span>
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    id="category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as PizzaCategory)}
+                    className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                    required
+                  >
+                    {PIZZA_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat} className="bg-background text-foreground">
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Select the exact category this item belongs to.
+                  </p>
+                </div>
+
+                {/* Price */}
+                <div className="space-y-2">
+                  <Label htmlFor="price" className="flex items-center gap-1.5">
+                    <DollarSign className="size-4 text-primary" />
+                    <span>Price (USD / $)</span>
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-semibold">
+                      $
+                    </span>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      min="0.5"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="14.99"
+                      className="pl-7"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Set a competitive retail price for this item.
+                  </p>
+                </div>
+              </div>
+
+              {/* Restaurant Location / Area */}
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-1.5">
+                  <MapPin className="size-4 text-primary" />
+                  <span>Restaurant Location / Area</span>
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Dhanmondi, Dhaka or Gulshan Branch"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Area or neighborhood where this pizza is baked and dispatched from.
+                </p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="size-4 text-primary" />
+                    <span>Description & Ingredients</span>
+                    <span className="text-destructive">*</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    {description.length}/500
+                  </span>
+                </Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                  placeholder="San Marzano tomato sauce, fresh buffalo mozzarella, fragrant sweet basil, extra virgin olive oil, baked on slow-fermented crust."
+                  rows={4}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Describe key toppings, crust style, flavor profile, and portion details.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column (1 Col): Image Upload & Review Information */}
+        <div className="space-y-6">
+          {/* Item Image Upload Card */}
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="border-b border-border/40 pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImagePlus className="size-4 text-primary" />
+                  <CardTitle className="text-sm font-medium">Item Image</CardTitle>
+                </div>
+                <Badge variant="outline" className="text-[11px] border-primary/30 text-primary">
+                  Required
+                </Badge>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4 pt-4">
+              {/* Preview Area */}
+              {previewUrl ? (
+                <div className="relative aspect-4/3 rounded-xl overflow-hidden border border-border group bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewUrl}
+                    alt="Menu item preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 size-7 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black transition-colors"
+                    title="Remove image"
+                  >
+                    <X className="size-4" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[11px] px-2 py-1 rounded-md truncate">
+                    {selectedFileName}
+                  </div>
+                </div>
+              ) : (
+                <label
+                  htmlFor="file-upload"
+                  className="flex flex-col items-center justify-center aspect-4/3 rounded-xl border-2 border-dashed border-border/80 hover:border-primary/60 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer p-6 text-center group"
+                >
+                  <div className="size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Upload className="size-5" />
+                  </div>
+                  <span className="font-medium text-xs text-foreground mt-3">
+                    Click or drag image here
+                  </span>
+                  <span className="text-[11px] text-muted-foreground mt-1">
+                    JPG, PNG, or WebP (Max 5MB)
+                  </span>
+                  <span className="text-[10px] text-primary/80 mt-2 font-medium">
+                    Auto-hosted on ImgBB
+                  </span>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
+                High-quality photos increase customer orders. Use a clear, well-lit shot of your pizza.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Submission Notice Card */}
+          <Card className="border-border/60 shadow-sm bg-muted/20">
+            <CardHeader className="pb-3 border-b border-border/40">
+              <div className="flex items-center gap-2">
+                <Clock className="size-4 text-amber-500" />
+                <CardTitle className="text-sm font-medium">Status: Pending Review</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-3 text-xs text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  Newly submitted items start in <strong className="text-foreground">Pending</strong> status.
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  An Admin reviews food photos and pricing before approving for the public menu.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Form Actions */}
+          <div className="space-y-2 pt-2">
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-9"
+            >
+              <span>Submit Menu Item</span>
+            </Button>
+
+            <Link
+              href="/dashboard/vendor/menu-items"
+              className={buttonVariants({
+                variant: "outline",
+                className: "w-full text-xs text-muted-foreground hover:text-foreground h-8",
+              })}
+            >
+              <ArrowLeft className="size-3.5 mr-1" />
+              <span>Back to My Menu Items</span>
+            </Link>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
