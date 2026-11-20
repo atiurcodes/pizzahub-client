@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
+  AlertTriangle,
   ArrowLeft,
   Building2,
   CheckCircle2,
@@ -34,8 +35,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
+import { PlanLimitBanner } from "@/components/dashboard/plan-limit-banner"
 import type { DashboardUser } from "@/lib/auth-guard"
-import { createMenuItem, uploadImage } from "@/services/api"
+import { createMenuItem, getMyMenuItems, uploadImage } from "@/services/api"
 import { PIZZA_CATEGORIES, type PizzaCategory } from "@/types"
 
 interface AddMenuItemFormProps {
@@ -60,7 +62,26 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Plan limit states
   const isPremium = user.subscriptionPlan === "premium"
+  const [activeItemCount, setActiveItemCount] = useState<number | null>(null)
+  const [isLoadingCount, setIsLoadingCount] = useState(true)
+
+  // Fetch current menu item count to enforce free plan limits in the UI
+  useEffect(() => {
+    getMyMenuItems()
+      .then((items) => {
+        // Count active/pending items (exclude rejected)
+        const count = items.filter((i) => i.status !== "rejected").length
+        setActiveItemCount(count)
+      })
+      .catch((err) => console.error("Error fetching item count:", err))
+      .finally(() => setIsLoadingCount(false))
+  }, [])
+
+  // Business logic: Free vendors can only have up to 3 active items
+  const isLimitReached = !isPremium && activeItemCount !== null && activeItemCount >= 3
+  const remainingSlots = isPremium ? null : Math.max(0, 3 - (activeItemCount ?? 0))
 
   // Handle local image file selection for live preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,6 +104,17 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   // Form submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Enforce plan limit before submitting
+    if (isLimitReached) {
+      toast.add({
+        title: "Plan Limit Reached",
+        description:
+          "Free plan limit of 3 items reached. Please upgrade to Premium.",
+        type: "error",
+      })
+      return
+    }
 
     // Step A: Client-side input validation
     if (!itemName.trim() || itemName.trim().length < 3) {
@@ -172,59 +204,11 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner: Subscription Plan Limit Notice */}
-      <div
-        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border text-sm ${
-          isPremium
-            ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200"
-            : "bg-primary/5 border-primary/20 text-foreground"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          {isPremium ? (
-            <div className="size-9 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-              <Crown className="size-5 fill-amber-500 text-amber-500" />
-            </div>
-          ) : (
-            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Info className="size-5" />
-            </div>
-          )}
-          <div>
-            <div className="font-semibold flex items-center gap-2">
-              <span>{isPremium ? "Premium Vendor Plan" : "Free Vendor Plan"}</span>
-              <Badge
-                variant={isPremium ? "default" : "secondary"}
-                className={
-                  isPremium
-                    ? "bg-amber-500 text-white font-medium text-[11px]"
-                    : "text-[11px]"
-                }
-              >
-                {isPremium ? "Unlimited Items" : "Max 3 Active Items"}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {isPremium
-                ? "You have unlimited active item listings and priority placement on the homepage."
-                : "Free plan vendors can publish up to 3 active menu items. Upgrade to Premium for unlimited listings."}
-            </p>
-          </div>
-        </div>
-
-        {!isPremium && (
-          <Link
-            href="/dashboard/vendor/subscription"
-            className={buttonVariants({
-              variant: "outline",
-              size: "sm",
-              className: "shrink-0 border-primary/30 text-primary hover:bg-primary/10 text-xs",
-            })}
-          >
-            <span>Upgrade Plan</span>
-          </Link>
-        )}
-      </div>
+      {/* Top Banner: Modular Plan Limit Banner Component */}
+      <PlanLimitBanner
+        isPremium={isPremium}
+        activeItemCount={activeItemCount}
+      />
 
       {/* Main Add Item Form */}
       <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-3">
@@ -463,18 +447,30 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
           <div className="space-y-2 pt-2">
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-9"
+              disabled={isSubmitting || isLimitReached || isLoadingCount}
+              className={`w-full font-semibold h-9 ${
+                isLimitReached
+                  ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin mr-1.5" />
                   <span>Submitting Menu Item...</span>
                 </>
+              ) : isLimitReached ? (
+                <span>Free Plan Limit Reached (3/3)</span>
               ) : (
                 <span>Submit Menu Item</span>
               )}
             </Button>
+
+            {isLimitReached && (
+              <p className="text-[11px] text-destructive text-center">
+                Upgrade to Premium or delete an existing item to add more pizzas.
+              </p>
+            )}
 
             <Link
               href="/dashboard/vendor/menu-items"
