@@ -12,6 +12,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,11 +25,15 @@ import {
 } from "@/components/ui/table"
 import { getAdminUsers } from "@/services/admin.service"
 import type { PlatformUser } from "@/types"
+import { UserBlockButton } from "./user-block-button"
 
 export function AdminUsersList() {
   const [users, setUsers] = useState<PlatformUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedRole, setSelectedRole] = useState<
+    "all" | "customer" | "vendor" | "admin"
+  >("all")
 
   // 1. Fetch all users from server
   useEffect(() => {
@@ -40,13 +45,28 @@ export function AdminUsersList() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  // 2. Client-side Search by name or email
+  // 2. Handle Block / Unblock status change from child component
+  const handleUserStatusChange = (userId: string, isBlocked: boolean) => {
+    setUsers((prev) =>
+      prev.map((user) => (user._id === userId ? { ...user, isBlocked } : user))
+    )
+  }
+
+  // 3. Role counts
+  const allCount = users.length
+  const customerCount = users.filter((u) => u.role === "customer").length
+  const vendorCount = users.filter((u) => u.role === "vendor").length
+  const adminCount = users.filter((u) => u.role === "admin").length
+
+  // 3. Combined Filter: Role + Search by name/email
   const filteredUsers = users.filter((user) => {
-    if (!searchTerm.trim()) return true
+    const roleMatch = selectedRole === "all" || user.role === selectedRole
+    if (!searchTerm.trim()) return roleMatch
+
     const term = searchTerm.toLowerCase().trim()
     const nameMatch = user.name?.toLowerCase().includes(term)
     const emailMatch = user.email?.toLowerCase().includes(term)
-    return Boolean(nameMatch || emailMatch)
+    return roleMatch && Boolean(nameMatch || emailMatch)
   })
 
   if (isLoading) {
@@ -68,21 +88,58 @@ export function AdminUsersList() {
 
   return (
     <div className="space-y-4">
-      {/* Search Input Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/60">
+        {/* Role Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            variant={selectedRole === "all" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setSelectedRole("all")}
+            className="text-xs h-8 font-medium"
+          >
+            All Users ({allCount})
+          </Button>
+
+          <Button
+            variant={selectedRole === "customer" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setSelectedRole("customer")}
+            className="text-xs h-8 font-medium"
+          >
+            Customers ({customerCount})
+          </Button>
+
+          <Button
+            variant={selectedRole === "vendor" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setSelectedRole("vendor")}
+            className="text-xs h-8 font-medium"
+          >
+            Vendors ({vendorCount})
+          </Button>
+
+          <Button
+            variant={selectedRole === "admin" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setSelectedRole("admin")}
+            className="text-xs h-8 font-medium"
+          >
+            Admins ({adminCount})
+          </Button>
+        </div>
+
+        {/* Live Search Input */}
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 text-xs h-9 bg-card"
+            className="pl-8 text-xs h-8 bg-muted/30"
           />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Showing {filteredUsers.length} of {users.length} users
-        </p>
       </div>
 
       {/* Users Table */}
@@ -96,16 +153,17 @@ export function AdminUsersList() {
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-xs text-muted-foreground"
                   >
-                    No users found matching &ldquo;{searchTerm}&rdquo;
+                    No users found matching your filters.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -175,6 +233,14 @@ export function AdminUsersList() {
                             year: "numeric",
                           })
                         : "—"}
+                    </TableCell>
+
+                    {/* Action: Block / Unblock Button (Modular Component) */}
+                    <TableCell className="text-right">
+                      <UserBlockButton
+                        user={user}
+                        onStatusChange={handleUserStatusChange}
+                      />
                     </TableCell>
                   </TableRow>
                 ))

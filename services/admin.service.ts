@@ -71,6 +71,18 @@ export async function getAdminUsers(): Promise<PlatformUser[]> {
   return (data.users || []) as PlatformUser[]
 }
 
+/**
+ * Toggle user blocked status (Admin only, PATCH /api/admin/users/:id/block)
+ */
+export async function toggleUserBlockStatus(
+  id: string
+): Promise<{ success: boolean; isBlocked: boolean; message: string }> {
+  return apiFetch(`/api/admin/users/${id}/block`, {
+    method: "PATCH",
+  })
+}
+
+
 
 
 
