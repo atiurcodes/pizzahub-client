@@ -37,10 +37,9 @@ export function AdminUsersList() {
 
   // 1. Fetch users from backend with URL query parameters & debounce
   useEffect(() => {
-    setIsLoading(true)
-
     // Debounce timer (300ms) to avoid sending requests on every keystroke
     const timer = setTimeout(() => {
+      setIsLoading(true)
       getAdminUsers({
         role: selectedRole,
         search: searchTerm,
@@ -223,10 +222,10 @@ export function AdminUsersList() {
                     <TableCell className="text-xs text-muted-foreground">
                       {user.createdAt
                         ? new Date(user.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                         : "—"}
                     </TableCell>
 
