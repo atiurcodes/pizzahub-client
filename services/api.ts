@@ -78,3 +78,12 @@ export async function updateMenuItem(
     body: JSON.stringify(menuData),
   })
 }
+
+/**
+ * Delete a menu item (Vendor only, DELETE /api/menu/:id)
+ */
+export async function deleteMenuItem(id: string) {
+  return apiFetch(`/api/menu/${id}`, {
+    method: "DELETE",
+  })
+}
