@@ -2,6 +2,28 @@ import { apiFetch } from "@/lib/api"
 import type { MenuItem } from "@/types"
 
 // ==========================================
+// Admin Overview / Stats Actions
+// ==========================================
+
+export interface AdminStats {
+  totalUsers: number
+  totalVendors: number
+  totalCustomers: number
+  totalMenuItems: number
+  pendingMenuItems: number
+  approvedMenuItems: number
+  totalTransactions: number
+}
+
+/**
+ * Fetch real-time platform statistics for admin dashboard overview
+ */
+export async function getAdminStats(): Promise<AdminStats> {
+  const data = await apiFetch("/api/admin/stats")
+  return data.stats
+}
+
+// ==========================================
 // Admin Menu Management Actions
 // ==========================================
 
