@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { AdminOverviewView } from "@/components/dashboard/admin-overview-view"
+import { AdminOverviewView } from "@/components/dashboard/admin/admin-overview-view"
 import { requireRole } from "@/lib/auth-guard"
 
 export const metadata: Metadata = {

@@ -37,3 +37,18 @@ export interface MenuItem extends MenuItemData {
   status: MenuItemStatus
   createdAt: string
 }
+
+// 5. Platform User Account (Retrieved from MongoDB for Admin)
+export interface PlatformUser {
+  _id: string
+  name: string
+  email: string
+  role: UserRole
+  image?: string | null
+  isBlocked: boolean
+  businessName?: string | null
+  subscriptionPlan?: SubscriptionPlan
+  createdAt: string
+  updatedAt?: string
+}
+

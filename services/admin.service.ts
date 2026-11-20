@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api"
-import type { MenuItem } from "@/types"
+import type { MenuItem, PlatformUser } from "@/types"
 
 // ==========================================
 // Admin Overview / Stats Actions
@@ -58,6 +58,19 @@ export async function deleteAdminMenuItem(id: string) {
     method: "DELETE",
   })
 }
+
+// ==========================================
+// Admin User Management Actions
+// ==========================================
+
+/**
+ * Fetch all registered users for admin management (GET /api/admin/users)
+ */
+export async function getAdminUsers(): Promise<PlatformUser[]> {
+  const data = await apiFetch("/api/admin/users")
+  return (data.users || []) as PlatformUser[]
+}
+
 
 
 

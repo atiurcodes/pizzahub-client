@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { VendorProfileForm } from "@/components/dashboard/vendor-profile-form"
+import { VendorProfileForm } from "@/components/dashboard/vendor/vendor-profile-form"
 import { requireRole } from "@/lib/auth-guard"
 
 export const metadata: Metadata = {

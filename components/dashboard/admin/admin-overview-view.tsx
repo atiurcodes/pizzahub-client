@@ -18,7 +18,7 @@ import {
 import { StatCard } from "@/components/dashboard/stat-card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getAdminStats, type AdminStats } from "@/services/api"
+import { getAdminStats, type AdminStats } from "@/services/admin.service"
 
 // Sample monthly trend data for chart
 const monthlyOrdersData = [

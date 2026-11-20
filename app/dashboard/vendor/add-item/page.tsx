@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { AddMenuItemForm } from "@/components/dashboard/add-menu-item-form"
+import { AddMenuItemForm } from "@/components/dashboard/vendor/add-menu-item-form"
 import { requireRole } from "@/lib/auth-guard"
 
 export const metadata: Metadata = {

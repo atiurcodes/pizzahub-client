@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { EditMenuItemContainer } from "@/components/dashboard/edit-menu-container"
+import { EditMenuItemContainer } from "@/components/dashboard/vendor/edit-menu-container"
 import { requireRole } from "@/lib/auth-guard"
 
 export const metadata: Metadata = {

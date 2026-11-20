@@ -27,8 +27,8 @@ import {
   deleteAdminMenuItem,
   getAdminMenuItems,
   updateAdminMenuItemStatus,
-  type MenuItem,
-} from "@/services/api"
+} from "@/services/admin.service"
+import type { MenuItem } from "@/types"
 
 export function AdminMenuList() {
   const [items, setItems] = useState<MenuItem[]>([])

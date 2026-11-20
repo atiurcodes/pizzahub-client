@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
 
-import { VendorMenuList } from "@/components/dashboard/vendor-menu-list"
+import { VendorMenuList } from "@/components/dashboard/vendor/vendor-menu-list"
 import { buttonVariants } from "@/components/ui/button"
 import { requireRole } from "@/lib/auth-guard"
 

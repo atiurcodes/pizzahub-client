@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { AdminMenuList } from "@/components/dashboard/admin-menu-list"
+import { AdminMenuList } from "@/components/dashboard/admin/admin-menu-list"
 import { requireRole } from "@/lib/auth-guard"
 
 export const metadata: Metadata = {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AlertCircle, Loader2 } from "lucide-react"
 
-import { EditMenuItemForm } from "@/components/dashboard/edit-menu-item-form"
+import { EditMenuItemForm } from "@/components/dashboard/vendor/edit-menu-item-form"
 import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { getMenuItemById, type MenuItem } from "@/services/api"
