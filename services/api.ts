@@ -57,3 +57,24 @@ export async function getMyMenuItems(): Promise<MenuItem[]> {
   const data = await apiFetch("/api/menu/my-items")
   return (data.items || []) as MenuItem[]
 }
+
+/**
+ * Fetch a single menu item by ID (GET /api/menu/:id)
+ */
+export async function getMenuItemById(id: string): Promise<MenuItem> {
+  const data = await apiFetch(`/api/menu/${id}`)
+  return data.item as MenuItem
+}
+
+/**
+ * Update an existing menu item (Vendor only, PATCH /api/menu/:id)
+ */
+export async function updateMenuItem(
+  id: string,
+  menuData: Partial<MenuItemData>
+) {
+  return apiFetch(`/api/menu/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(menuData),
+  })
+}

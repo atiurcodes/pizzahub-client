@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Calendar, MapPin, Pizza, PlusCircle } from "lucide-react"
+import { Calendar, Edit, MapPin, Pizza, PlusCircle } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -15,7 +15,11 @@ export function VendorMenuList() {
 
   // পেজ লোড হলে ব্যাকএন্ড থেকে আইটেমগুলো নিয়ে আসা
   useEffect(() => {
-    getMyMenuItems().then((data) => setItems(data))
+    getMyMenuItems()
+      .then((data) => setItems(data))
+      .catch((err) => {
+        console.error("Error loading menu items:", err)
+      })
   }, [])
 
   // ১. কোনো আইটেম না থাকলে সহজ এমপ্টি মেসেজ
@@ -111,6 +115,20 @@ export function VendorMenuList() {
                     : "Recent"}
                 </span>
               </span>
+
+              {/* Edit Item Link */}
+              <Link
+                href={`/dashboard/vendor/menu-items/${item._id}/edit`}
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "xs",
+                  className:
+                    "h-6 text-[11px] border-primary/30 text-primary hover:bg-primary/10 gap-1 px-2 font-medium",
+                })}
+              >
+                <Edit className="size-3" />
+                <span>Edit</span>
+              </Link>
             </div>
           </CardContent>
         </Card>

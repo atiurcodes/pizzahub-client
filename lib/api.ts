@@ -25,14 +25,21 @@ export async function getAuthToken() {
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const token = await getAuthToken()
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...options.headers,
+      },
+    })
+  } catch (err) {
+    throw new Error(
+      "Cannot connect to backend server. Please make sure pizzahub-server is running on port 5000."
+    )
+  }
 
   if (res.status === 401) clearAuthToken()
 
