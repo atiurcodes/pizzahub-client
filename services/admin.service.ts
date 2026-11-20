@@ -50,4 +50,14 @@ export async function updateAdminMenuItemStatus(
   })
 }
 
+/**
+ * Delete any menu item (Admin only, DELETE /api/admin/menu-items/:id)
+ */
+export async function deleteAdminMenuItem(id: string) {
+  return apiFetch(`/api/admin/menu-items/${id}`, {
+    method: "DELETE",
+  })
+}
+
+
 
