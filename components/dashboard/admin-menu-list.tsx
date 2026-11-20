@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Table,
@@ -13,13 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getAdminMenuItems, type MenuItem } from "@/services/api"
+import { toast } from "@/components/ui/toast"
+import {
+  getAdminMenuItems,
+  updateAdminMenuItemStatus,
+  type MenuItem,
+} from "@/services/api"
 
 export function AdminMenuList() {
   const [items, setItems] = useState<MenuItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
-  // Fetch all menu items from server
+  // 1. Fetch all menu items from server
   useEffect(() => {
     getAdminMenuItems()
       .then((data) => setItems(data))
@@ -28,6 +35,39 @@ export function AdminMenuList() {
       })
       .finally(() => setIsLoading(false))
   }, [])
+
+  // 2. Handle Status Edit (Approve / Reject)
+  const handleStatusChange = async (
+    id: string,
+    newStatus: "approved" | "rejected"
+  ) => {
+    setUpdatingId(id)
+    try {
+      await updateAdminMenuItemStatus(id, newStatus)
+
+      // UI তে স্ট্যাটাস আপডেট করা
+      setItems((prev) =>
+        prev.map((item) =>
+          item._id === id ? { ...item, status: newStatus } : item
+        )
+      )
+
+      toast.add({
+        title: "Status Updated",
+        description: `Item marked as ${newStatus}.`,
+        type: "success",
+      })
+    } catch (err) {
+      toast.add({
+        title: "Update Failed",
+        description:
+          err instanceof Error ? err.message : "Failed to update status.",
+        type: "error",
+      })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -58,54 +98,92 @@ export function AdminMenuList() {
               <TableHead>Vendor</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TableRow key={item._id}>
-                {/* Image */}
-                <TableCell>
-                  <div className="size-12 rounded-md bg-muted overflow-hidden relative shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={
-                        item.images?.[0] ||
-                        "https://images.unsplash.com/photo-1513104890138-7c749659a591"
-                      }
-                      alt={item.itemName}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </TableCell>
+            {items.map((item) => {
+              const isUpdating = updatingId === item._id
 
-                {/* Name */}
-                <TableCell className="font-medium text-sm">
-                  {item.itemName}
-                </TableCell>
+              return (
+                <TableRow key={item._id}>
+                  {/* Image */}
+                  <TableCell>
+                    <div className="size-12 rounded-md bg-muted overflow-hidden relative shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={
+                          item.images?.[0] ||
+                          "https://images.unsplash.com/photo-1513104890138-7c749659a591"
+                        }
+                        alt={item.itemName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </TableCell>
 
-                {/* Category */}
-                <TableCell className="text-xs text-muted-foreground">
-                  {item.category}
-                </TableCell>
+                  {/* Name */}
+                  <TableCell className="font-medium text-sm">
+                    {item.itemName}
+                  </TableCell>
 
-                {/* Vendor Email */}
-                <TableCell className="text-xs text-muted-foreground">
-                  {item.vendorEmail}
-                </TableCell>
+                  {/* Category */}
+                  <TableCell className="text-xs text-muted-foreground">
+                    {item.category}
+                  </TableCell>
 
-                {/* Price */}
-                <TableCell className="text-sm font-semibold">
-                  ${Number(item.price).toFixed(2)}
-                </TableCell>
+                  {/* Vendor Email */}
+                  <TableCell className="text-xs text-muted-foreground">
+                    {item.vendorEmail}
+                  </TableCell>
 
-                {/* Status */}
-                <TableCell>
-                  <Badge variant="outline" className="capitalize text-xs">
-                    {item.status}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+                  {/* Price */}
+                  <TableCell className="text-sm font-semibold">
+                    ${Number(item.price).toFixed(2)}
+                  </TableCell>
+
+                  {/* Status Badge */}
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={`capitalize text-xs ${
+                        item.status === "approved"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                          : item.status === "rejected"
+                            ? "bg-destructive/10 text-destructive border-destructive/30"
+                            : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                      }`}
+                    >
+                      {item.status}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Action Buttons: Approve / Reject */}
+                  <TableCell className="text-right space-x-1.5">
+                    <Button
+                      size="sm"
+                      disabled={isUpdating || item.status === "approved"}
+                      onClick={() => handleStatusChange(item._id, "approved")}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      {isUpdating && <Loader2 className="size-3 animate-spin mr-1" />}
+                      Approve
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdating || item.status === "rejected"}
+                      onClick={() => handleStatusChange(item._id, "rejected")}
+                      className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                    >
+                      {isUpdating && <Loader2 className="size-3 animate-spin mr-1" />}
+                      Reject
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </CardContent>

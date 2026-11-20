@@ -15,6 +15,17 @@ export async function getAdminMenuItems(status?: string): Promise<MenuItem[]> {
   return (data.items || []) as MenuItem[]
 }
 
-
+/**
+ * Update a menu item's status (Admin only, PATCH /api/admin/menu-items/:id/status)
+ */
+export async function updateAdminMenuItemStatus(
+  id: string,
+  status: "approved" | "rejected" | "pending" | "inactive"
+) {
+  return apiFetch(`/api/admin/menu-items/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  })
+}
 
 
