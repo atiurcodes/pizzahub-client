@@ -35,60 +35,40 @@ export function AdminUsersList() {
     "all" | "customer" | "vendor" | "admin"
   >("all")
 
-  // 1. Fetch all users from server
+  // 1. Fetch users from backend with URL query parameters & debounce
   useEffect(() => {
-    getAdminUsers()
-      .then((data) => setUsers(data))
-      .catch((err) => {
-        console.error("Failed to load users:", err)
-      })
-      .finally(() => setIsLoading(false))
-  }, [])
+    setIsLoading(true)
 
-  // 2. Handle Block / Unblock status change from child component
+    // Debounce timer (300ms) to avoid sending requests on every keystroke
+    const timer = setTimeout(() => {
+      getAdminUsers({
+        role: selectedRole,
+        search: searchTerm,
+      })
+        .then((data) => {
+          setUsers(data)
+        })
+        .catch((err) => {
+          console.error("Failed to load users:", err)
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [selectedRole, searchTerm])
+
+  // 2. Handle Block / Unblock status change from child button
   const handleUserStatusChange = (userId: string, isBlocked: boolean) => {
     setUsers((prev) =>
       prev.map((user) => (user._id === userId ? { ...user, isBlocked } : user))
     )
   }
 
-  // 3. Role counts
-  const allCount = users.length
-  const customerCount = users.filter((u) => u.role === "customer").length
-  const vendorCount = users.filter((u) => u.role === "vendor").length
-  const adminCount = users.filter((u) => u.role === "admin").length
-
-  // 3. Combined Filter: Role + Search by name/email
-  const filteredUsers = users.filter((user) => {
-    const roleMatch = selectedRole === "all" || user.role === selectedRole
-    if (!searchTerm.trim()) return roleMatch
-
-    const term = searchTerm.toLowerCase().trim()
-    const nameMatch = user.name?.toLowerCase().includes(term)
-    const emailMatch = user.email?.toLowerCase().includes(term)
-    return roleMatch && Boolean(nameMatch || emailMatch)
-  })
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-2">
-        <Loader2 className="size-6 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading users...</p>
-      </div>
-    )
-  }
-
-  if (users.length === 0) {
-    return (
-      <Card className="p-8 text-center border-dashed">
-        <p className="text-sm text-muted-foreground">No users found.</p>
-      </Card>
-    )
-  }
-
   return (
     <div className="space-y-4">
-      {/* Filter & Search Bar */}
+      {/* Filter & Search Bar (Sends query to Backend via URLSearchParams) */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/60">
         {/* Role Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
@@ -98,7 +78,7 @@ export function AdminUsersList() {
             onClick={() => setSelectedRole("all")}
             className="text-xs h-8 font-medium"
           >
-            All Users ({allCount})
+            All Users
           </Button>
 
           <Button
@@ -107,7 +87,7 @@ export function AdminUsersList() {
             onClick={() => setSelectedRole("customer")}
             className="text-xs h-8 font-medium"
           >
-            Customers ({customerCount})
+            Customers
           </Button>
 
           <Button
@@ -116,7 +96,7 @@ export function AdminUsersList() {
             onClick={() => setSelectedRole("vendor")}
             className="text-xs h-8 font-medium"
           >
-            Vendors ({vendorCount})
+            Vendors
           </Button>
 
           <Button
@@ -125,13 +105,17 @@ export function AdminUsersList() {
             onClick={() => setSelectedRole("admin")}
             className="text-xs h-8 font-medium"
           >
-            Admins ({adminCount})
+            Admins
           </Button>
         </div>
 
         {/* Live Search Input */}
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          {isLoading ? (
+            <Loader2 className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 animate-spin text-primary" />
+          ) : (
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          )}
           <Input
             type="text"
             placeholder="Search by name or email..."
@@ -157,17 +141,28 @@ export function AdminUsersList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.length === 0 ? (
+              {isLoading && users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Loader2 className="size-6 animate-spin text-primary" />
+                      <p className="text-xs text-muted-foreground">
+                        Loading users from database...
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : users.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
                     className="h-24 text-center text-xs text-muted-foreground"
                   >
-                    No users found matching your filters.
+                    No users found matching your query.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <TableRow key={user._id}>
                     {/* Avatar & Name */}
                     <TableCell>

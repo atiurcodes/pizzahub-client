@@ -64,10 +64,22 @@ export async function deleteAdminMenuItem(id: string) {
 // ==========================================
 
 /**
- * Fetch all registered users for admin management (GET /api/admin/users)
+ * Fetch registered users with backend query filtering (GET /api/admin/users?role=...&search=...)
  */
-export async function getAdminUsers(): Promise<PlatformUser[]> {
-  const data = await apiFetch("/api/admin/users")
+export async function getAdminUsers(params?: {
+  role?: string
+  search?: string
+}): Promise<PlatformUser[]> {
+  const query = new URLSearchParams()
+  if (params?.role && params.role !== "all") {
+    query.set("role", params.role)
+  }
+  if (params?.search && params.search.trim()) {
+    query.set("search", params.search.trim())
+  }
+
+  const queryString = query.toString() ? `?${query.toString()}` : ""
+  const data = await apiFetch(`/api/admin/users${queryString}`)
   return (data.users || []) as PlatformUser[]
 }
 
