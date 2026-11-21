@@ -443,8 +443,8 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
               type="submit"
               disabled={isSubmitting || isLimitReached || isLoadingCount}
               className={`w-full font-semibold h-9 ${isLimitReached
-                  ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
-                  : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
+                : "bg-primary hover:bg-primary/90 text-primary-foreground"
                 }`}
             >
               {isSubmitting ? (
