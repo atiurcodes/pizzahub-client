@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,8 @@ function validateSignInForm(email: string, password: string) {
  */
 export function SignInForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
 
   // 1. Form field states
   const [email, setEmail] = useState("")
@@ -91,8 +93,8 @@ export function SignInForm() {
         type: "success",
       })
 
-      // /dashboard automatically redirects based on user role (admin / vendor / customer)
-      router.push("/dashboard")
+      // Redirect user to destination callbackUrl or dashboard
+      router.push(callbackUrl)
       router.refresh()
     } catch {
       const message = "Something went wrong. Please try again."

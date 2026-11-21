@@ -20,7 +20,17 @@ export type OrderStatus = "pending" | "accepted" | "rejected" | "cancelled"
 export type UserRole = "admin" | "vendor" | "customer"
 export type SubscriptionPlan = "free" | "premium"
 
-// 3. Menu Item Data (Input payload for creating a menu item)
+// 3. Vendor Public Profile
+export interface VendorPublicInfo {
+  name: string
+  businessName: string
+  email: string
+  subscriptionPlan: SubscriptionPlan
+  isPremium: boolean
+  image?: string | null
+}
+
+// 4. Menu Item Data (Input payload for creating a menu item)
 export interface MenuItemData {
   itemName: string
   category: PizzaCategory | string
@@ -31,14 +41,17 @@ export interface MenuItemData {
   vendorEmail: string // Sole vendor identifier
 }
 
-// 4. Stored Menu Item (Retrieved from MongoDB)
+// 5. Stored Menu Item (Retrieved from MongoDB)
 export interface MenuItem extends MenuItemData {
   _id: string
   status: MenuItemStatus
   createdAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  vendor?: VendorPublicInfo | null
 }
 
-// 5. Platform User Account (Retrieved from MongoDB for Admin)
+// 6. Platform User Account (Retrieved from MongoDB for Admin)
 export interface PlatformUser {
   _id: string
   name: string

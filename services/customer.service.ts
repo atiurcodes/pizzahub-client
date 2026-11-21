@@ -22,3 +22,24 @@ export async function getPublicMenuItems(): Promise<MenuItem[]> {
   const data = await res.json()
   return (data.items || []) as MenuItem[]
 }
+
+/**
+ * Fetch a single menu item by ID for the details page (GET /api/menu/:id)
+ */
+export async function getPublicMenuItemById(id: string): Promise<MenuItem | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/menu/${id}`, {
+      cache: "no-store",
+    })
+
+    if (!res.ok) {
+      return null
+    }
+
+    const data = await res.json()
+    return (data.item || null) as MenuItem | null
+  } catch (error) {
+    console.error("Error fetching single menu item:", error)
+    return null
+  }
+}

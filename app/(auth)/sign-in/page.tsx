@@ -1,6 +1,7 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Pizza, X } from "lucide-react"
+import { Loader2, Pizza, X } from "lucide-react"
 
 import { SignInForm } from "@/components/auth/sign-in-form"
 
@@ -54,7 +55,15 @@ export default function SignInPage() {
 
           {/* Interactive Client Form */}
           <div className="mt-6">
-            <SignInForm />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="size-6 animate-spin text-primary" />
+                </div>
+              }
+            >
+              <SignInForm />
+            </Suspense>
           </div>
 
           {/* Footer Switch Link */}
