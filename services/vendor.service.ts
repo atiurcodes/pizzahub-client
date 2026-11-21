@@ -56,6 +56,15 @@ export async function getMyMenuItems(): Promise<MenuItem[]> {
 }
 
 /**
+ * Fetch active/pending menu item count for logged-in vendor (Vendor only, GET /api/menu/my-menu-count)
+ * Uses fast MongoDB countDocuments on backend
+ */
+export async function getMyMenuCount(): Promise<number> {
+  const data = await apiFetch("/api/menu/my-menu-count")
+  return Number(data.count ?? 0)
+}
+
+/**
  * Fetch a single menu item by ID (GET /api/menu/:id)
  */
 export async function getMenuItemById(id: string): Promise<MenuItem> {

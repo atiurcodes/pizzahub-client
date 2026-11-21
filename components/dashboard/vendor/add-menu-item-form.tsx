@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import { PlanLimitBanner } from "@/components/dashboard/vendor/plan-limit-banner"
 import type { DashboardUser } from "@/lib/auth-guard"
-import { createMenuItem, getMyMenuItems, uploadImage } from "@/services/api"
+import { createMenuItem, getMyMenuCount, uploadImage } from "@/services/api"
 import { PIZZA_CATEGORIES, type PizzaCategory } from "@/types"
 
 interface AddMenuItemFormProps {
@@ -67,12 +67,10 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   const [activeItemCount, setActiveItemCount] = useState<number | null>(null)
   const [isLoadingCount, setIsLoadingCount] = useState(true)
 
-  // Fetch current menu item count to enforce free plan limits in the UI
+  // Fetch current menu item count directly from backend MongoDB countDocuments
   useEffect(() => {
-    getMyMenuItems()
-      .then((items) => {
-        // Count active/pending items (exclude rejected)
-        const count = items.filter((i) => i.status !== "rejected").length
+    getMyMenuCount()
+      .then((count) => {
         setActiveItemCount(count)
       })
       .catch((err) => console.error("Error fetching item count:", err))
