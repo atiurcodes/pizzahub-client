@@ -23,6 +23,11 @@ export async function POST() {
             ],
             mode: 'payment',
             customer_email: getSession?.user?.email,
+            metadata: {
+                vendorId: getSession?.user?.id || '',
+                vendorEmail: getSession?.user?.email || '',
+                plan: 'premium',
+            },
             success_url: `${origin}/dashboard/vendor/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/dashboard/vendor/subscription/cancel`,
             // Provide a name (for example, hosted_web_0001) to label this Checkout integration and measure its conversion independently

@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import { PlanLimitBanner } from "@/components/dashboard/vendor/plan-limit-banner"
 import type { DashboardUser } from "@/lib/auth-guard"
-import { createMenuItem, getMyMenuCount, uploadImage } from "@/services/api"
+import { createMenuItem, getVendorSubscriptionStatus, uploadImage } from "@/services/api"
 import { PIZZA_CATEGORIES, type PizzaCategory } from "@/types"
 
 interface AddMenuItemFormProps {
@@ -59,23 +59,30 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
   // Loading state
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Plan limit states
-  const isPremium = user.subscriptionPlan === "premium"
+  // Live Plan & Menu Limit states from backend
+  const [liveIsPremium, setLiveIsPremium] = useState<boolean>(
+    user.subscriptionPlan === "premium"
+  )
   const [activeItemCount, setActiveItemCount] = useState<number | null>(null)
-  const [isLoadingCount, setIsLoadingCount] = useState(true)
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true)
 
-  // Fetch current menu item count directly from backend MongoDB countDocuments
+  // Fetch real-time subscription status & item count directly from backend
   useEffect(() => {
-    getMyMenuCount()
-      .then((count) => {
-        setActiveItemCount(count)
+    getVendorSubscriptionStatus()
+      .then((status) => {
+        setLiveIsPremium(status.isPremium)
+        setActiveItemCount(status.activeItemCount)
       })
-      .catch((err) => console.error("Error fetching item count:", err))
-      .finally(() => setIsLoadingCount(false))
+      .catch((err) => {
+        console.error("Error checking subscription status from backend:", err)
+      })
+      .finally(() => setIsLoadingStatus(false))
   }, [])
 
-  // Business logic: Free vendors can only have up to 3 active items
-  const isLimitReached = !isPremium && activeItemCount !== null && activeItemCount >= 3
+  // If premium: unlimited menu uploads (isLimitReached is ALWAYS false!)
+  // If free: max 3 active items allowed
+  const isLimitReached =
+    !liveIsPremium && activeItemCount !== null && activeItemCount >= 3
 
   // Handle local image file selection for live preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,7 +207,7 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
     <div className="space-y-6">
       {/* Top Banner: Modular Plan Limit Banner Component */}
       <PlanLimitBanner
-        isPremium={isPremium}
+        isPremium={liveIsPremium}
         activeItemCount={activeItemCount}
       />
 
@@ -441,7 +448,7 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
           <div className="space-y-2 pt-2">
             <Button
               type="submit"
-              disabled={isSubmitting || isLimitReached || isLoadingCount}
+              disabled={isSubmitting || isLimitReached || isLoadingStatus}
               className={`w-full font-semibold h-9 ${isLimitReached
                 ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
                 : "bg-primary hover:bg-primary/90 text-primary-foreground"

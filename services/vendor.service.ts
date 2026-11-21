@@ -64,6 +64,28 @@ export async function getMyMenuCount(): Promise<number> {
   return Number(data.count ?? 0)
 }
 
+export interface VendorSubscriptionStatus {
+  subscriptionPlan: "free" | "premium"
+  isPremium: boolean
+  activeItemCount: number
+  maxAllowed: number | "unlimited"
+  canAddMore: boolean
+}
+
+/**
+ * Fetch live subscription plan and menu item limits from backend (GET /api/menu/subscription-status)
+ */
+export async function getVendorSubscriptionStatus(): Promise<VendorSubscriptionStatus> {
+  const data = await apiFetch("/api/menu/subscription-status")
+  return {
+    subscriptionPlan: data.subscriptionPlan || "free",
+    isPremium: Boolean(data.isPremium),
+    activeItemCount: Number(data.activeItemCount ?? 0),
+    maxAllowed: data.maxAllowed,
+    canAddMore: Boolean(data.canAddMore),
+  }
+}
+
 /**
  * Fetch a single menu item by ID (GET /api/menu/:id)
  */
