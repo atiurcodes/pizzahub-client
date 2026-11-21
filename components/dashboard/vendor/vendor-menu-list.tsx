@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   Calendar,
   Edit,
-  Loader2,
   MapPin,
   Pizza,
   PlusCircle,
@@ -15,24 +14,15 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { toast } from "@/components/ui/toast"
-import { deleteMenuItem, getMyMenuItems, type MenuItem } from "@/services/api"
+import { getMyMenuItems, type MenuItem } from "@/services/api"
+import { VendorDeleteMenuDialog } from "./vendor-delete-menu-dialog"
 
 export function VendorMenuList() {
   // আইটেম স্টেট
   const [items, setItems] = useState<MenuItem[]>([])
 
-  // ডিলিট মোডাল ও লোডিং স্টেট
+  // ডিলিট মোডাল স্টেট
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   // পেজ লোড হলে ব্যাকএন্ড থেকে আইটেমগুলো নিয়ে আসা
   useEffect(() => {
@@ -42,36 +32,6 @@ export function VendorMenuList() {
         console.error("Error loading menu items:", err)
       })
   }, [])
-
-  // ডিলিট কনফার্ম হ্যান্ডলার
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return
-    setIsDeleting(true)
-
-    try {
-      await deleteMenuItem(itemToDelete._id)
-
-      // UI থেকে তাৎক্ষণিক আইটেমটি রিমুভ করা
-      setItems((prev) => prev.filter((i) => i._id !== itemToDelete._id))
-
-      toast.add({
-        title: "Item Deleted",
-        description: `"${itemToDelete.itemName}" has been deleted successfully.`,
-        type: "success",
-      })
-
-      setItemToDelete(null)
-    } catch (err) {
-      toast.add({
-        title: "Delete Failed",
-        description:
-          err instanceof Error ? err.message : "Failed to delete item.",
-        type: "error",
-      })
-    } finally {
-      setIsDeleting(false)
-    }
-  }
 
   // ১. কোনো আইটেম না থাকলে সহজ এমপ্টি মেসেজ
   if (items.length === 0) {
@@ -199,59 +159,14 @@ export function VendorMenuList() {
         ))}
       </div>
 
-      {/* ShadCN Delete Confirmation Dialog */}
-      <Dialog
-        open={Boolean(itemToDelete)}
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) setItemToDelete(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="space-y-2">
-            <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
-              <Trash2 className="size-5" />
-            </div>
-            <DialogTitle className="text-base font-bold text-foreground">
-              Delete Menu Item?
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Are you sure you want to delete{" "}
-              <strong className="text-foreground font-semibold">
-                &ldquo;{itemToDelete?.itemName}&rdquo;
-              </strong>
-              ? This item will be permanently removed from your menu and cannot be recovered.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isDeleting}
-              onClick={() => setItemToDelete(null)}
-              className="text-xs"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isDeleting}
-              onClick={handleDeleteConfirm}
-              className="text-xs font-semibold"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin mr-1" />
-                  <span>Deleting...</span>
-                </>
-              ) : (
-                <span>Yes, Delete Item</span>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Vendor Delete Confirmation Dialog */}
+      <VendorDeleteMenuDialog
+        item={itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onDeleted={(deletedId) =>
+          setItems((prev) => prev.filter((i) => i._id !== deletedId))
+        }
+      />
     </>
   )
 }

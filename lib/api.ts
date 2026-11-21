@@ -35,7 +35,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         ...options.headers,
       },
     })
-  } catch (err) {
+  } catch {
     throw new Error(
       "Cannot connect to backend server. Please make sure pizzahub-server is running on port 5000."
     )

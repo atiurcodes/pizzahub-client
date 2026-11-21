@@ -4,15 +4,12 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  AlertTriangle,
   ArrowLeft,
   Building2,
   CheckCircle2,
   Clock,
-  Crown,
   DollarSign,
   ImagePlus,
-  Info,
   Loader2,
   MapPin,
   Pizza,
@@ -79,7 +76,6 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
 
   // Business logic: Free vendors can only have up to 3 active items
   const isLimitReached = !isPremium && activeItemCount !== null && activeItemCount >= 3
-  const remainingSlots = isPremium ? null : Math.max(0, 3 - (activeItemCount ?? 0))
 
   // Handle local image file selection for live preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -446,11 +442,10 @@ export function AddMenuItemForm({ user }: AddMenuItemFormProps) {
             <Button
               type="submit"
               disabled={isSubmitting || isLimitReached || isLoadingCount}
-              className={`w-full font-semibold h-9 ${
-                isLimitReached
+              className={`w-full font-semibold h-9 ${isLimitReached
                   ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
                   : "bg-primary hover:bg-primary/90 text-primary-foreground"
-              }`}
+                }`}
             >
               {isSubmitting ? (
                 <>

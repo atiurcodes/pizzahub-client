@@ -1,10 +1,8 @@
-"use client"
-
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, Clock, Flame, Star, Store } from "lucide-react"
-import { motion } from "motion/react"
+import { ArrowRight, Clock, Star, Store } from "lucide-react"
 
+import { HeroMotionWrapper } from "@/components/hero-motion-wrapper"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -15,6 +13,11 @@ const heroStats = [
   { icon: Store, value: "50+", label: "Local Pizzerias", accent: "text-emerald-400" },
 ]
 
+/**
+ * HeroSection: Pure Server Component for the landing page.
+ * All markup and images are SSR rendered for peak SEO and performance.
+ * The subtle entrance animation is isolated to the HeroMotionWrapper client component.
+ */
 export function HeroSection() {
   return (
     <section className="relative flex min-h-[calc(100svh-5rem)] w-full items-center overflow-hidden bg-[#14100D]">
@@ -34,12 +37,7 @@ export function HeroSection() {
 
       {/* 3. Main Left Hero Content */}
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-          className="max-w-2xl"
-        >
+        <HeroMotionWrapper className="max-w-2xl">
           {/* Live Status Pill with Basil Green Dot */}
           <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 backdrop-blur-md">
             <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
@@ -98,40 +96,15 @@ export function HeroSection() {
                       {stat.value}
                     </span>
                   </div>
-                  <span className="mt-0.5 text-xs text-stone-300">
+                  <span className="mt-1 text-xs text-stone-300">
                     {stat.label}
                   </span>
                 </div>
               )
             })}
           </div>
-        </motion.div>
+        </HeroMotionWrapper>
       </div>
-
-      {/* 4. Floating Freshness Card (Bottom Right on Tablet & Desktop) */}
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-        className="absolute right-6 bottom-6 z-10 hidden items-center gap-3.5 rounded-2xl border border-white/20 bg-card/95 px-4 py-3.5 text-card-foreground shadow-2xl backdrop-blur-md sm:flex lg:right-10 lg:bottom-10"
-      >
-        <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-tomato/15 text-primary">
-          <Flame className="size-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="font-heading text-sm font-bold leading-tight">
-              Baked Fresh to Order
-            </p>
-            <span className="rounded-full bg-basil/15 px-2 py-0.5 text-[10px] font-bold text-basil">
-              LIVE
-            </span>
-          </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Verified local pizza shops near you
-          </p>
-        </div>
-      </motion.div>
     </section>
   )
 }

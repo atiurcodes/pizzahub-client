@@ -7,14 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
   Table,
   TableBody,
   TableCell,
@@ -24,20 +16,19 @@ import {
 } from "@/components/ui/table"
 import { toast } from "@/components/ui/toast"
 import {
-  deleteAdminMenuItem,
   getAdminMenuItems,
   updateAdminMenuItemStatus,
 } from "@/services/admin.service"
 import type { MenuItem } from "@/types"
+import { AdminDeleteMenuDialog } from "./admin-delete-menu-dialog"
 
 export function AdminMenuList() {
   const [items, setItems] = useState<MenuItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
-  // ডিলিট ডায়ালগ ও লোডিং স্টেট
+  // Selected item for delete dialog
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   // 1. Fetch all menu items from server
   useEffect(() => {
@@ -79,35 +70,6 @@ export function AdminMenuList() {
       })
     } finally {
       setUpdatingId(null)
-    }
-  }
-
-  // 3. Handle Item Delete (Admin)
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete) return
-    setIsDeleting(true)
-
-    try {
-      await deleteAdminMenuItem(itemToDelete._id)
-
-      // UI থেকে তাৎক্ষণিক আইটেম রিমুভ
-      setItems((prev) => prev.filter((i) => i._id !== itemToDelete._id))
-
-      toast.add({
-        title: "Item Deleted",
-        description: `"${itemToDelete.itemName}" has been deleted.`,
-        type: "success",
-      })
-      setItemToDelete(null)
-    } catch (err) {
-      toast.add({
-        title: "Delete Failed",
-        description:
-          err instanceof Error ? err.message : "Failed to delete item.",
-        type: "error",
-      })
-    } finally {
-      setIsDeleting(false)
     }
   }
 
@@ -245,59 +207,14 @@ export function AdminMenuList() {
         </CardContent>
       </Card>
 
-      {/* ShadCN Delete Confirmation Dialog */}
-      <Dialog
-        open={Boolean(itemToDelete)}
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) setItemToDelete(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="space-y-2">
-            <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
-              <Trash2 className="size-5" />
-            </div>
-            <DialogTitle className="text-base font-bold text-foreground">
-              Delete Menu Item?
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Are you sure you want to delete{" "}
-              <strong className="text-foreground font-semibold">
-                &ldquo;{itemToDelete?.itemName}&rdquo;
-              </strong>
-              ? This action will permanently remove this item from the platform.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isDeleting}
-              onClick={() => setItemToDelete(null)}
-              className="text-xs"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isDeleting}
-              onClick={handleDeleteConfirm}
-              className="text-xs font-semibold"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin mr-1" />
-                  <span>Deleting...</span>
-                </>
-              ) : (
-                <span>Yes, Delete Item</span>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Admin Delete Confirmation Dialog */}
+      <AdminDeleteMenuDialog
+        item={itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onDeleted={(deletedId) =>
+          setItems((prev) => prev.filter((i) => i._id !== deletedId))
+        }
+      />
     </>
   )
 }
