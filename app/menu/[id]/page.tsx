@@ -1,4 +1,3 @@
-import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
@@ -8,28 +7,6 @@ import { getPublicMenuItemById } from "@/services/customer.service"
 
 interface PageProps {
   params: Promise<{ id: string }>
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { id } = await params
-  const item = await getPublicMenuItemById(id)
-
-  if (!item) {
-    return {
-      title: "Pizza Not Found | PizzaHub",
-      description: "The requested pizza item could not be found on PizzaHub.",
-    }
-  }
-
-  return {
-    title: `${item.itemName} ($${Number(item.price).toFixed(2)}) | PizzaHub Menu`,
-    description: item.description.slice(0, 160),
-    openGraph: {
-      title: `${item.itemName} | Handcrafted Pizza`,
-      description: item.description,
-      images: item.images && item.images.length > 0 ? [item.images[0]] : [],
-    },
-  }
 }
 
 export default async function MenuItemDetailsPage({ params }: PageProps) {

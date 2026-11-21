@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   Crown,
-  Heart,
   Info,
   MapPin,
   Pizza,
@@ -41,7 +40,6 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
       : ["https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80"]
 
   const [activeImage, setActiveImage] = useState(images[0])
-  const [isFavorite, setIsFavorite] = useState(false)
 
   const isOwner = currentUser?.email === item.vendorEmail
   const isAdmin = currentUser?.role === "admin"
@@ -56,15 +54,6 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
       title: "Ready for Order Flow!",
       description: "Pizza details are confirmed. Next, we will connect the customer ordering form.",
       type: "info",
-    })
-  }
-
-  function toggleFavorite() {
-    setIsFavorite(!isFavorite)
-    toast.add({
-      title: !isFavorite ? "Added to favorites!" : "Removed from favorites",
-      description: `${item.itemName} has been ${!isFavorite ? "saved to your wishlist" : "removed"}.`,
-      type: "success",
     })
   }
 
@@ -117,21 +106,6 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
                 {item.category}
               </Badge>
             </div>
-
-            {/* Favorite Button */}
-            <button
-              type="button"
-              onClick={toggleFavorite}
-              aria-label="Add to favorites"
-              className="absolute top-3 right-3 size-9 rounded-full bg-background/90 text-foreground backdrop-blur-md flex items-center justify-center hover:bg-background transition-all shadow-sm group"
-            >
-              <Heart
-                className={cn(
-                  "size-4.5 transition-colors",
-                  isFavorite ? "fill-destructive text-destructive" : "text-muted-foreground group-hover:text-foreground"
-                )}
-              />
-            </button>
 
             {/* Premium Vendor Badge on Image if applicable */}
             {isPremiumVendor && (
