@@ -68,6 +68,44 @@ export async function getPublicMenuItems(
 }
 
 /**
+ * Fetch featured menu items for homepage (minimum 6 items, prioritizing premium vendors)
+ */
+export async function getFeaturedMenuItems(limit = 6): Promise<MenuItem[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/customer/menu/featured?limit=${limit}`, {
+      cache: "no-store",
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        return data.items as MenuItem[]
+      }
+    }
+  } catch (e) {
+    console.warn("Featured endpoint unavailable, falling back to general menu:", e)
+  }
+
+  // Fallback: fetch from general menu and apply client-side prioritization
+  try {
+    const res = await getPublicMenuItems()
+    const items = res.items || []
+
+    const sorted = [...items].sort((a, b) => {
+      const aPremium = a.vendor?.isPremium ? 1 : 0
+      const bPremium = b.vendor?.isPremium ? 1 : 0
+      if (bPremium !== aPremium) return bPremium - aPremium
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+
+    return sorted.slice(0, Math.max(limit, 6))
+  } catch (err) {
+    console.error("Failed to load featured menu items:", err)
+    return []
+  }
+}
+
+/**
  * Fetch a single menu item by ID for the details page (GET /api/menu/:id)
  */
 export async function getPublicMenuItemById(id: string): Promise<MenuItem | null> {
