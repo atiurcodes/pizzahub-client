@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from "next/font/google"
 
+import { Footer } from "@/components/footer"
 import { Navbar } from "@/components/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toast"
@@ -52,6 +53,7 @@ export default function RootLayout({
           <Toaster>
             <Navbar />
             <main>{children}</main>
+            <Footer />
           </Toaster>
         </ThemeProvider>
       </body>
