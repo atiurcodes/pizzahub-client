@@ -147,12 +147,20 @@ export function SignUpForm() {
     })
 
     try {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pending_auth_toast", "google-signup")
+      }
+
       const res = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/?auth=google-signup",
+        callbackURL: "/?auth=google-signin",
+        newUserCallbackURL: "/?auth=google-signup",
       })
 
       if (res.error) {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("pending_auth_toast")
+        }
         const message =
           res.error.message || "Google sign up failed. Please try again."
         setErrorMessage(message)
@@ -163,6 +171,9 @@ export function SignUpForm() {
         })
       }
     } catch {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("pending_auth_toast")
+      }
       const message = "Unable to connect to Google right now."
       setErrorMessage(message)
       toast.add({

@@ -1,7 +1,10 @@
 import { apiFetch } from "@/lib/api"
 import type { CreateOrderPayload, CustomerOrder, MenuItem } from "@/types"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(
+  /\/$/,
+  ""
+)
 
 // ==========================================
 // Customer & Public Menu API Services

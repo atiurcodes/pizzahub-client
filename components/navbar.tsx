@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -77,28 +77,6 @@ export function Navbar() {
     ...(user ? [{ label: "Dashboard", href: dashboardHref }] : []),
   ]
 
-  // Show a success toast after returning from Google Sign In / Sign Up
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const authStatus = params.get("auth")
-
-    if (authStatus === "google-signin" || authStatus === "google-signup") {
-      toast.add({
-        title:
-          authStatus === "google-signup"
-            ? "Account created with Google!"
-            : "Signed in with Google!",
-        description: "Welcome to PizzaHub.",
-        type: "success",
-      })
-
-      params.delete("auth")
-      const cleanUrl = params.toString()
-        ? `${pathname}?${params.toString()}`
-        : pathname
-      window.history.replaceState({}, "", cleanUrl)
-    }
-  }, [pathname])
 
   function toggleTheme() {
     setTheme(resolvedTheme === "dark" ? "light" : "dark")

@@ -1,6 +1,8 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { Bricolage_Grotesque, DM_Sans, Geist_Mono } from "next/font/google"
 
+import { AuthToastListener } from "@/components/auth-toast-listener"
 import { Footer } from "@/components/footer"
 import { Navbar } from "@/components/navbar"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -51,6 +53,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <Toaster>
+            <Suspense fallback={null}>
+              <AuthToastListener />
+            </Suspense>
             <Navbar />
             <main>{children}</main>
             <Footer />

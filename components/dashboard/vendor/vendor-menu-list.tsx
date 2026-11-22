@@ -14,26 +14,83 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getMyMenuItems, type MenuItem } from "@/services/api"
 import { VendorDeleteMenuDialog } from "./vendor-delete-menu-dialog"
 
 export function VendorMenuList() {
   // আইটেম স্টেট
   const [items, setItems] = useState<MenuItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // ডিলিট মোডাল স্টেট
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null)
 
   // পেজ লোড হলে ব্যাকএন্ড থেকে আইটেমগুলো নিয়ে আসা
   useEffect(() => {
+    let active = true
+
     getMyMenuItems()
-      .then((data) => setItems(data))
+      .then((data) => {
+        if (active) setItems(data)
+      })
       .catch((err) => {
         console.error("Error loading menu items:", err)
       })
+      .finally(() => {
+        if (active) setIsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
   }, [])
 
-  // ১. কোনো আইটেম না থাকলে সহজ এমপ্টি মেসেজ
+  // ১. লোডিং এর সময় স্কেলিটন গ্রিড দেখানো (কোনো এমপ্টি স্টেট যেন ফ্ল্যাশ না করে)
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <Card
+            key={idx}
+            className="overflow-hidden border-border/60 shadow-xs"
+          >
+            {/* ছবির স্কেলিটন */}
+            <Skeleton className="aspect-4/3 w-full rounded-none" />
+
+            {/* হেডার ও ব্যাজ */}
+            <CardHeader className="p-4 pb-2 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <Skeleton className="h-5 w-3/4 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="size-3.5 rounded-full" />
+                <Skeleton className="h-3 w-28 rounded-md" />
+              </div>
+            </CardHeader>
+
+            {/* ডেসক্রিপশন ও বাটনস */}
+            <CardContent className="p-4 pt-1 space-y-3">
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-full rounded-md" />
+                <Skeleton className="h-3 w-4/5 rounded-md" />
+              </div>
+              <div className="pt-2 border-t border-border/40 flex items-center justify-between">
+                <Skeleton className="h-3.5 w-20 rounded-md" />
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="h-6 w-14 rounded-md" />
+                  <Skeleton className="h-6 w-16 rounded-md" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  // ২. কোনো আইটেম না থাকলে সহজ এমপ্টি মেসেজ
   if (items.length === 0) {
     return (
       <Card className="text-center p-12 border-dashed border-border/80">
