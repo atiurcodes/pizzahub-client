@@ -8,6 +8,10 @@ const db = client.db('pizzahubdb')
 
 export const auth = betterAuth({
     database: mongodbAdapter(db, { client }),
+    baseURL:
+        process.env.BETTER_AUTH_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
 
     // Store a signed HS256 JWT inside Better Auth's session cookie (better-auth.session_data)
     session: {
