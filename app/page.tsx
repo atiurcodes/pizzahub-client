@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/hero-section"
+import { CategoriesSection } from "@/components/home/categories-section"
 import { FeaturedSection } from "@/components/home/featured-section"
 import { getFeaturedMenuItems } from "@/services/customer.service"
 
@@ -12,6 +13,7 @@ export default async function HomePage() {
     <>
       <HeroSection />
       <FeaturedSection items={featuredItems} />
+      <CategoriesSection />
     </>
   )
 }
