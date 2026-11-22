@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api"
-import type { MenuItem, MenuItemData } from "@/types"
+import type { CustomerOrder, MenuItem, MenuItemData, VendorStats } from "@/types"
 
 // ==========================================
 // 1. Vendor Image Upload (ImgBB)
@@ -115,3 +115,49 @@ export async function deleteMenuItem(id: string) {
     method: "DELETE",
   })
 }
+
+// ==========================================
+// 3. Vendor Customer Orders Management
+// ==========================================
+
+/**
+ * Fetch incoming customer orders for the logged-in vendor (GET /api/vendor/orders)
+ */
+export async function getVendorOrders(params?: {
+  status?: string
+  search?: string
+}): Promise<CustomerOrder[]> {
+  const queryParts: string[] = []
+  if (params?.status && params.status !== "all") {
+    queryParts.push(`status=${encodeURIComponent(params.status)}`)
+  }
+  if (params?.search && params.search.trim() !== "") {
+    queryParts.push(`search=${encodeURIComponent(params.search.trim())}`)
+  }
+
+  const query = queryParts.length > 0 ? `?${queryParts.join("&")}` : ""
+  const data = await apiFetch(`/api/vendor/orders${query}`)
+  return (data.orders || []) as CustomerOrder[]
+}
+
+/**
+ * Accept or reject a customer order (Vendor only, PATCH /api/vendor/orders/:id/status)
+ */
+export async function updateVendorOrderStatus(
+  orderId: string,
+  status: "accepted" | "rejected"
+) {
+  return apiFetch(`/api/vendor/orders/${orderId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  })
+}
+
+/**
+ * Fetch vendor dashboard analytics (GET /api/vendor/stats)
+ */
+export async function getVendorStats(): Promise<VendorStats> {
+  const data = await apiFetch("/api/vendor/stats")
+  return data.stats as VendorStats
+}
+

@@ -115,3 +115,16 @@ export interface TransactionItem {
   createdAt: string
 }
 
+// 9. Vendor Statistics
+export interface VendorStats {
+  totalMenuItems: number
+  activeMenuItems: number
+  pendingMenuItems: number
+  totalOrders: number
+  pendingOrders: number
+  acceptedOrders: number
+  rejectedOrders: number
+  cancelledOrders: number
+  totalRevenue: number
+}
+
