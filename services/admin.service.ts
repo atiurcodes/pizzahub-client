@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api"
-import type { MenuItem, PlatformUser } from "@/types"
+import type { MenuItem, PlatformUser, TransactionItem } from "@/types"
 
 // ==========================================
 // Admin Overview / Stats Actions
@@ -92,6 +92,40 @@ export async function toggleUserBlockStatus(
   return apiFetch(`/api/admin/users/${id}/block`, {
     method: "PATCH",
   })
+}
+
+// ==========================================
+// Admin Transactions Actions (Strictly Read-Only)
+// ==========================================
+
+export interface AdminTransactionsResponse {
+  transactions: TransactionItem[]
+  count: number
+  totalRevenue: number
+}
+
+/**
+ * Fetch all platform subscription transactions (Admin only, Strictly Read-Only)
+ */
+export async function getAdminTransactions(params?: {
+  search?: string
+  status?: string
+}): Promise<AdminTransactionsResponse> {
+  const query = new URLSearchParams()
+  if (params?.search && params.search.trim()) {
+    query.set("search", params.search.trim())
+  }
+  if (params?.status && params.status !== "all") {
+    query.set("status", params.status)
+  }
+
+  const queryString = query.toString() ? `?${query.toString()}` : ""
+  const data = await apiFetch(`/api/admin/transactions${queryString}`)
+  return {
+    transactions: (data.transactions || []) as TransactionItem[],
+    count: Number(data.count ?? 0),
+    totalRevenue: Number(data.totalRevenue ?? 0),
+  }
 }
 
 

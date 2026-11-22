@@ -53,6 +53,11 @@ const sidebarLinksByRole: Record<UserRole, NavItem[]> = {
       href: "/dashboard/admin/transactions",
       icon: CreditCard,
     },
+    {
+      label: "Profile Settings",
+      href: "/dashboard/admin/profile",
+      icon: Settings,
+    },
   ],
   vendor: [
     { label: "Overview", href: "/dashboard/vendor", icon: LayoutDashboard },

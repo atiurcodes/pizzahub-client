@@ -98,3 +98,20 @@ export interface CustomerOrder {
   updatedAt?: string
 }
 
+// 8. Subscription Transaction (Admin Read-Only)
+export interface TransactionItem {
+  _id: string
+  vendorId?: string
+  vendorEmail: string
+  vendorName?: string
+  businessName?: string
+  vendorImage?: string | null
+  plan: "premium" | string
+  amount: number
+  currency: string
+  stripeSessionId: string
+  stripeSubscriptionId?: string
+  status: string
+  createdAt: string
+}
+
