@@ -126,3 +126,19 @@ export async function cancelCustomerOrder(orderId: string): Promise<{
     method: "PATCH",
   })
 }
+
+export interface CustomerStats {
+  totalOrders: number
+  pendingOrders: number
+  acceptedOrders: number
+  rejectedOrders: number
+  cancelledOrders: number
+}
+
+/**
+ * Fetch real-time order statistics for customer dashboard overview (GET /api/customer/stats)
+ */
+export async function getCustomerStats(): Promise<CustomerStats> {
+  const data = await apiFetch("/api/customer/stats")
+  return data.stats as CustomerStats
+}

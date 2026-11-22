@@ -10,6 +10,12 @@ export function clearAuthToken() {
 export async function getAuthToken() {
   if (savedToken) return savedToken
 
+  if (typeof window === "undefined") {
+    throw new Error(
+      "apiFetch must be called from client-side components ('use client') or client event handlers."
+    )
+  }
+
   const res = await fetch("/api/auth/jwt")
   const data = await res.json()
 
