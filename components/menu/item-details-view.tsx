@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "@/components/ui/toast"
+import { OrderConfirmationDialog } from "@/components/menu/order-confirmation-dialog"
 import { cn } from "@/lib/utils"
 import type { MenuItem } from "@/types"
 
@@ -40,6 +40,7 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
       : ["https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80"]
 
   const [activeImage, setActiveImage] = useState(images[0])
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false)
 
   const isOwner = currentUser?.email === item.vendorEmail
   const isAdmin = currentUser?.role === "admin"
@@ -48,14 +49,6 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
 
   const vendorName = item.vendor?.businessName || item.vendor?.name || "Local Pizza Shop"
   const isPremiumVendor = Boolean(item.vendor?.isPremium)
-
-  function handleOrderClick() {
-    toast.add({
-      title: "Ready for Order Flow!",
-      description: "Pizza details are confirmed. Next, we will connect the customer ordering form.",
-      type: "info",
-    })
-  }
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl space-y-8">
@@ -338,7 +331,7 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <Button
                     size="lg"
-                    onClick={handleOrderClick}
+                    onClick={() => setIsOrderDialogOpen(true)}
                     className="flex-1 rounded-xl bg-gradient-to-r from-primary to-tomato font-bold text-sm shadow-md shadow-primary/20 hover:opacity-95"
                   >
                     <Pizza className="size-4 mr-2" />
@@ -375,6 +368,13 @@ export function ItemDetailsView({ item, currentUser }: ItemDetailsViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Customer Order Confirmation Dialog */}
+      <OrderConfirmationDialog
+        item={item}
+        isOpen={isOrderDialogOpen}
+        onClose={() => setIsOrderDialogOpen(false)}
+      />
     </div>
   )
 }

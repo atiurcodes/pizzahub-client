@@ -65,3 +65,36 @@ export interface PlatformUser {
   updatedAt?: string
 }
 
+// 7. Customer Order Data
+export interface CreateOrderPayload {
+  itemId: string
+  deliveryDate: string
+  deliveryAddress: string
+  message?: string
+  quantity?: number
+}
+
+export interface CustomerOrder {
+  _id: string
+  itemId: string
+  itemName: string
+  itemImage?: string | null
+  category: string
+  unitPrice: number
+  quantity: number
+  totalPrice: number
+  vendorId?: string | null
+  vendorEmail: string
+  vendorName: string
+  customerId: string
+  customerName: string
+  customerEmail: string
+  deliveryDate: string
+  deliveryAddress: string
+  message?: string
+  status: OrderStatus
+  createdAt: string
+  cancelledAt?: string
+  updatedAt?: string
+}
+

@@ -1,4 +1,5 @@
-import type { MenuItem } from "@/types"
+import { apiFetch } from "@/lib/api"
+import type { CreateOrderPayload, CustomerOrder, MenuItem } from "@/types"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 
@@ -42,4 +43,43 @@ export async function getPublicMenuItemById(id: string): Promise<MenuItem | null
     console.error("Error fetching single menu item:", error)
     return null
   }
+}
+
+// ==========================================
+// Customer Order API Services
+// ==========================================
+
+/**
+ * Submit a new customer pizza order (POST /api/customer/orders)
+ */
+export async function createCustomerOrder(payload: CreateOrderPayload): Promise<{
+  success: boolean
+  message: string
+  orderId: string
+  order: CustomerOrder
+}> {
+  return apiFetch("/api/customer/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Fetch all orders placed by the logged-in customer (GET /api/customer/orders)
+ */
+export async function getCustomerOrders(): Promise<CustomerOrder[]> {
+  const data = await apiFetch("/api/customer/orders")
+  return (data.orders || []) as CustomerOrder[]
+}
+
+/**
+ * Cancel a pending customer order (PATCH /api/customer/orders/:id/cancel)
+ */
+export async function cancelCustomerOrder(orderId: string): Promise<{
+  success: boolean
+  message: string
+}> {
+  return apiFetch(`/api/customer/orders/${orderId}/cancel`, {
+    method: "PATCH",
+  })
 }
