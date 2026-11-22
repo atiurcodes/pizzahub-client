@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
-import { Pizza } from "lucide-react"
 
-import { MenuCard } from "@/components/menu/menu-card"
+import { MenuBrowseView } from "@/components/menu/menu-browse-view"
 import { Badge } from "@/components/ui/badge"
 import { getPublicMenuItems } from "@/services/customer.service"
 import type { MenuItem } from "@/types"
@@ -17,10 +16,13 @@ export const dynamic = "force-dynamic"
 
 export default async function BrowseMenuPage() {
   let items: MenuItem[] = []
+  let locations: string[] = []
   let errorMsg = ""
 
   try {
-    items = await getPublicMenuItems()
+    const res = await getPublicMenuItems()
+    items = res.items
+    locations = res.locations
   } catch (err) {
     errorMsg = err instanceof Error ? err.message : "Failed to load pizzas."
   }
@@ -51,28 +53,9 @@ export default async function BrowseMenuPage() {
           </div>
         )}
 
-        {/* Empty State */}
-        {!errorMsg && items.length === 0 && (
-          <div className="text-center py-16 space-y-4 max-w-md mx-auto">
-            <div className="size-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-              <Pizza className="size-8" />
-            </div>
-            <h3 className="font-heading text-xl font-bold text-foreground">
-              No Pizzas Available Yet
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Local restaurants are baking their menu items. Check back soon for hot and fresh pizzas!
-            </p>
-          </div>
-        )}
-
-        {/* Pizza Card Grid */}
-        {!errorMsg && items.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map((item) => (
-              <MenuCard key={item._id} item={item} />
-            ))}
-          </div>
+        {/* Interactive Browse View with Search, Category & Location Filter and Price Sorting */}
+        {!errorMsg && (
+          <MenuBrowseView initialItems={items} initialLocations={locations} />
         )}
       </div>
     </div>

@@ -7,12 +7,51 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 // Customer & Public Menu API Services
 // ==========================================
 
+export interface MenuQueryParams {
+  search?: string
+  category?: string
+  location?: string
+  sort?: string
+  sortBy?: string
+  sortOrder?: string
+}
+
+export interface MenuApiResponse {
+  items: MenuItem[]
+  locations: string[]
+  count: number
+}
+
 /**
  * Fetch approved menu items for customer/public browsing (GET /api/customer/menu)
- * Accessible without login
+ * Supports query parameters for search, category, location, and price sorting
  */
-export async function getPublicMenuItems(): Promise<MenuItem[]> {
-  const res = await fetch(`${API_URL}/api/customer/menu`, {
+export async function getPublicMenuItems(
+  params?: MenuQueryParams
+): Promise<MenuApiResponse> {
+  const query = new URLSearchParams()
+  if (params?.search && params.search.trim()) {
+    query.append("search", params.search.trim())
+  }
+  if (params?.category && params.category !== "all") {
+    query.append("category", params.category)
+  }
+  if (params?.location && params.location !== "all") {
+    query.append("location", params.location)
+  }
+  if (params?.sort) {
+    query.append("sort", params.sort)
+  }
+  if (params?.sortBy) {
+    query.append("sortBy", params.sortBy)
+  }
+  if (params?.sortOrder) {
+    query.append("sortOrder", params.sortOrder)
+  }
+
+  const queryString = query.toString() ? `?${query.toString()}` : ""
+
+  const res = await fetch(`${API_URL}/api/customer/menu${queryString}`, {
     cache: "no-store",
   })
 
@@ -21,7 +60,11 @@ export async function getPublicMenuItems(): Promise<MenuItem[]> {
   }
 
   const data = await res.json()
-  return (data.items || []) as MenuItem[]
+  return {
+    items: (data.items || []) as MenuItem[],
+    locations: (data.locations || []) as string[],
+    count: Number(data.count ?? 0),
+  }
 }
 
 /**

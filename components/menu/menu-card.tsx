@@ -26,10 +26,15 @@ export function MenuCard({ item }: MenuCardProps) {
           alt={item.itemName}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-2.5 left-2.5">
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
           <Badge className="bg-background/90 text-foreground backdrop-blur-xs shadow-xs text-[11px] font-medium border-border/60">
             {item.category}
           </Badge>
+          {item.vendor?.isPremium && (
+            <Badge className="bg-amber-500 text-slate-950 font-bold text-[10px] border-amber-300 shadow-xs">
+              ★ Premium
+            </Badge>
+          )}
         </div>
         <div className="absolute bottom-2.5 right-2.5">
           <span className="bg-primary text-primary-foreground font-bold text-sm px-2.5 py-1 rounded-full shadow-xs">
@@ -57,7 +62,7 @@ export function MenuCard({ item }: MenuCardProps) {
           </div>
           <div className="flex items-center gap-1.5 truncate">
             <Store className="size-3.5 text-primary shrink-0" />
-            <span className="truncate">{item.vendorEmail}</span>
+            <span className="truncate">{item.vendor?.businessName || item.vendorEmail}</span>
           </div>
         </div>
       </CardContent>
