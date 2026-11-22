@@ -39,7 +39,7 @@ function getDashboardPath(role?: string | null) {
 
 // Helper: get the profile settings route for each user role
 function getProfilePath(role?: string | null) {
-  if (role === "admin") return "/dashboard/admin"
+  if (role === "admin") return "/dashboard/admin/profile"
   if (role === "vendor") return "/dashboard/vendor/profile"
   return "/dashboard/customer/profile"
 }
