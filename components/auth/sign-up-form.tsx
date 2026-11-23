@@ -153,8 +153,8 @@ export function SignUpForm() {
 
       const res = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/?auth=google-signin",
-        newUserCallbackURL: "/?auth=google-signup",
+        callbackURL: "/dashboard?auth=google-signin",
+        newUserCallbackURL: "/dashboard?auth=google-signup",
       })
 
       if (res.error) {

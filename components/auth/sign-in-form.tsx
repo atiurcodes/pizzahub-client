@@ -125,10 +125,14 @@ export function SignInForm() {
         sessionStorage.setItem("pending_auth_toast", "google-signin")
       }
 
+      const targetUrl =
+        callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/dashboard"
+      const sep = targetUrl.includes("?") ? "&" : "?"
+
       const res = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/?auth=google-signin",
-        newUserCallbackURL: "/?auth=google-signup",
+        callbackURL: `${targetUrl}${sep}auth=google-signin`,
+        newUserCallbackURL: `${targetUrl}${sep}auth=google-signup`,
       })
 
       if (res.error) {

@@ -12,8 +12,8 @@ import { useSession } from "@/lib/auth-client"
  * Catches either `?auth=google-signin` / `?auth=google-signup` URL search params
  * or the sessionStorage `pending_auth_toast` flag if query params were sanitized.
  *
- * Uses a small 350ms delay to guarantee that Base UI's <ToastProvider> has finished
- * mounting and subscribing to the global toastManager before toast.add() is emitted.
+ * Uses a safe deferred timer so React StrictMode or initial useSession()
+ * resolution does NOT prematurely cancel the toast notification.
  */
 export function AuthToastListener() {
   const pathname = usePathname()
@@ -22,39 +22,48 @@ export function AuthToastListener() {
   const hasTriggeredRef = useRef(false)
 
   useEffect(() => {
-    // Avoid double firing within the same session/view
+    // If already triggered, do not run again
     if (hasTriggeredRef.current) return
 
     const authFromUrl = searchParams.get("auth")
-    const pendingToast =
-      typeof window !== "undefined"
-        ? sessionStorage.getItem("pending_auth_toast")
-        : null
+    let authFromStorage: string | null = null
 
-    const authStatus =
+    if (typeof window !== "undefined") {
+      try {
+        authFromStorage = sessionStorage.getItem("pending_auth_toast")
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    const authType =
       authFromUrl === "google-signin" || authFromUrl === "google-signup"
         ? authFromUrl
-        : pendingToast === "google-signin" || pendingToast === "google-signup"
-          ? pendingToast
+        : authFromStorage === "google-signin" || authFromStorage === "google-signup"
+          ? authFromStorage
           : null
 
-    if (!authStatus) return
+    if (!authType) return
 
-    // If detected via sessionStorage without URL query, wait until session user is loaded
-    if (!authFromUrl && pendingToast && !session?.user) {
+    // If detected solely via sessionStorage without URL query, wait until session user is loaded
+    if (!authFromUrl && authFromStorage && !session?.user) {
       return
     }
 
-    hasTriggeredRef.current = true
-
-    // Remove from sessionStorage immediately so it won't fire again
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("pending_auth_toast")
-    }
-
-    // Delay ensures <ToastProvider> has subscribed to toastManager
     const timer = setTimeout(() => {
-      const isSignUp = authStatus === "google-signup"
+      if (hasTriggeredRef.current) return
+      hasTriggeredRef.current = true
+
+      // Clean up sessionStorage
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.removeItem("pending_auth_toast")
+        } catch {
+          // ignore
+        }
+      }
+
+      const isSignUp = authType === "google-signup"
       const userName = session?.user?.name
 
       toast.add({
@@ -67,22 +76,28 @@ export function AuthToastListener() {
         type: "success",
       })
 
-      // Clean the ?auth= query parameter without triggering full page re-render
+      // Clean the ?auth= query parameter from URL without triggering full page re-render
       if (
         typeof window !== "undefined" &&
         window.location.search.includes("auth=")
       ) {
-        const params = new URLSearchParams(window.location.search)
-        params.delete("auth")
-        const cleanQuery = params.toString()
-        const cleanUrl = cleanQuery
-          ? `${window.location.pathname}?${cleanQuery}`
-          : window.location.pathname
-        window.history.replaceState({}, "", cleanUrl)
+        try {
+          const url = new URL(window.location.href)
+          url.searchParams.delete("auth")
+          window.history.replaceState(
+            {},
+            "",
+            url.pathname + (url.search ? url.search : "")
+          )
+        } catch {
+          // ignore URL parsing errors
+        }
       }
-    }, 350)
+    }, 250)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+    }
   }, [searchParams, pathname, session])
 
   return null
