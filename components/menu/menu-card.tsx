@@ -68,16 +68,16 @@ export function MenuCard({ item }: MenuCardProps) {
       </CardContent>
 
       {/* 4. CTA Button */}
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-3.5 border-t border-border/40 bg-card/60">
         <Link
           href={`/menu/${item._id}`}
           className={cn(
-            buttonVariants({ variant: "default", size: "sm" }),
-            "w-full rounded-lg font-medium text-xs gap-1.5 group/btn"
+            buttonVariants({ variant: "default" }),
+            "w-full h-10 rounded-xl font-semibold text-sm gap-2 shadow-xs hover:shadow-md transition-all group/btn"
           )}
         >
           <span>View Details</span>
-          <ArrowRight className="size-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+          <ArrowRight className="size-4 transition-transform group-hover/btn:translate-x-1" />
         </Link>
       </CardFooter>
     </Card>
